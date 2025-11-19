@@ -11,5 +11,6 @@ export * from "./layout/ThemeProvider";
 export * from "./ui/Badge";
 export * from "./ui/Button";
 export * from "./ui/GlassCard";
+export * from "./ui/Input";
 export * from "./ui/Logo";
 export * from "./ui/DropdownMenu";
