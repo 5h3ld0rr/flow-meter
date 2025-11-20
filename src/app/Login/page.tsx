@@ -39,7 +39,7 @@ export default function LoginPage() {
             fullWidth
             size="lg"
             type="submit"
-            className="mt-7"
+            className="mt-7 justify-center"
           >
             Sign In
           </Button>

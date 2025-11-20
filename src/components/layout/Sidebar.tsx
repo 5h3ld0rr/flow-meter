@@ -75,7 +75,7 @@ export function Sidebar() {
                   }}
                   variant={isActive ? "primary" : "ghost"}
                   fullWidth
-                  className="flex items-center gap-3 px-4 py-3"
+                  className="gap-3 px-4 py-3"
                 >
                   <item.icon size={20} />
                   <span className="font-medium">{item.label}</span>

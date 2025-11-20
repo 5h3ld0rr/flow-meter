@@ -21,7 +21,7 @@ export function Button({
   className = "",
 }: ButtonProps) {
   const baseClasses =
-    "font-medium rounded-lg transition-smooth active-press focus:outline-none cursor-pointer my-1";
+    "font-medium rounded-lg transition-smooth active-press focus:outline-none cursor-pointer my-1 flex items-center gap-2";
   const variantClasses = {
     primary:
       "bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 dark:from-cyan-500 dark:to-blue-500 dark:hover:from-cyan-400 dark:hover:to-blue-400 text-white shadow-lg dark:shadow-glow-cyan",

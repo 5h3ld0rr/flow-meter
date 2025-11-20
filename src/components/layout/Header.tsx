@@ -72,7 +72,7 @@ export function Header({ title, subtitle }: HeaderProps) {
                 <Button
                   variant="ghost"
                   fullWidth
-                  className="flex items-center text-red-700 dark:text-red-400 gap-2"
+                  className="text-red-700 dark:text-red-400"
                 >
                   <LogOut />
                   Logout
