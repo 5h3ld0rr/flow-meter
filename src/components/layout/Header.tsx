@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, Moon, Bell, User, LogOut } from "lucide-react";
+import { Sun, Moon, Bell, User, LogOut, ArrowLeft } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { useTheme } from "next-themes";
 import {
@@ -10,25 +10,51 @@ import {
   DropdownMenuTrigger,
 } from "../ui/DropdownMenu";
 import { Button } from "../ui/Button";
+import { logout } from "@/lib/actions/auth";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  showBackButton?: boolean;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, showBackButton }: HeaderProps) {
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
 
   return (
     <GlassCard className="p-3 md:p-4 mb-4 md:mb-6">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl md:text-2xl font-bold truncate">{title}</h1>
-          {subtitle && (
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
-              {subtitle}
-            </p>
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          {showBackButton && (
+            <button
+              onClick={() => router.back()}
+              className="p-2 rounded-lg glass hover:bg-gray-100 dark:hover:bg-gray-100/5 transition-smooth shrink-0"
+              aria-label="Go back"
+            >
+              <ArrowLeft
+                size={20}
+                className="text-gray-700 dark:text-slate-300"
+              />
+            </button>
           )}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold truncate">{title}</h1>
+            {subtitle && (
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-2 md:space-x-3 shrink-0">
           {/* Theme Toggle */}
@@ -68,13 +94,13 @@ export function Header({ title, subtitle }: HeaderProps) {
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="glass p-0">
-              <DropdownMenuItem className="p-0">
+              <DropdownMenuItem onClick={handleLogout} className="p-0">
                 <Button
                   variant="ghost"
                   fullWidth
                   className="text-red-700 dark:text-red-400"
+                  icon={<LogOut className="text-inherit" />}
                 >
-                  <LogOut />
                   Logout
                 </Button>
               </DropdownMenuItem>

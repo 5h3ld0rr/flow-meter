@@ -65,7 +65,7 @@ export function Sidebar() {
           {/* Navigation */}
           <nav className="flex-1 pt-8 px-4 overflow-y-auto scrollbar-thin">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.path;
+              const isActive = pathname.includes(item.path);
               return (
                 <Button
                   key={item.path}
@@ -75,10 +75,11 @@ export function Sidebar() {
                   }}
                   variant={isActive ? "primary" : "ghost"}
                   fullWidth
-                  className="gap-3 px-4 py-3"
+                  icon={<item.icon size={20} className="mr-1" />}
+                  align="start"
+                  className="px-4 py-3 font-medium"
                 >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.label}</span>
+                  {item.label}
                 </Button>
               );
             })}
