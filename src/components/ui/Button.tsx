@@ -1,27 +1,38 @@
 import { cn } from "@/lib/utils";
+import { Loader2Icon } from "lucide-react";
+import Link from "next/link";
 
 interface ButtonProps {
   children: React.ReactNode;
+  icon?: React.ReactNode;
   variant?: "primary" | "secondary" | "ghost" | "danger";
+  align?: "center" | "start" | "end";
   size?: "sm" | "md" | "lg";
+  loading?: boolean;
   fullWidth?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  href?: string;
   type?: "button" | "submit" | "reset";
   className?: string;
 }
 export function Button({
   children,
+  icon,
   variant = "primary",
+  align = "center",
   size = "md",
   fullWidth = false,
+  loading = false,
   disabled = false,
   onClick,
+  href,
   type = "button",
   className = "",
 }: ButtonProps) {
   const baseClasses =
-    "font-medium rounded-lg transition-smooth active-press focus:outline-none cursor-pointer my-1 flex items-center gap-2";
+    "font-medium rounded-lg transition-smooth focus:outline-none my-1 flex items-center gap-2 justify-" +
+    align;
   const variantClasses = {
     primary:
       "bg-gradient-to-r from-blue-600 to-purple-500 hover:from-blue-700 hover:to-purple-600 dark:from-cyan-500 dark:to-blue-500 dark:hover:from-cyan-400 dark:hover:to-blue-400 text-white shadow-lg dark:shadow-glow-cyan",
@@ -37,13 +48,34 @@ export function Button({
     md: "px-4 py-2 text-base",
     lg: "px-6 py-3 text-lg",
   };
-  const disabledClasses = disabled ? "opacity-50 cursor-not-allowed" : "";
+  const disabledClasses =
+    disabled || loading ? "opacity-50 cursor-not-allowed" : "active-press";
   const widthClasses = fullWidth ? "w-full" : "";
-  return (
+  return href ? (
+    <Link
+      href={href}
+      className={cn(
+        "active-press",
+        baseClasses,
+        variantClasses[variant],
+        sizeClasses[size],
+        disabledClasses,
+        widthClasses,
+        className
+      )}
+    >
+      {icon && (
+        <div className={align == "center" && fullWidth ? "-ml-5" : ""}>
+          {icon}
+        </div>
+      )}
+      {children}
+    </Link>
+  ) : (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={loading || disabled}
       className={cn(
         baseClasses,
         variantClasses[variant],
@@ -53,6 +85,11 @@ export function Button({
         className
       )}
     >
+      {icon && (
+        <div className={align == "center" && fullWidth ? "-ml-5" : ""}>
+          {loading ? <Loader2Icon size={18} className="animate-spin" /> : icon}
+        </div>
+      )}
       {children}
     </button>
   );
