@@ -4,7 +4,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
 }
-export function Logo({ size = "md", showText = true }: LogoProps) {
+export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
     sm: {
       icon: 16,

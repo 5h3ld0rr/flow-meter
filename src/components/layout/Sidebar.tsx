@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   { path: "/UMS/Settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();

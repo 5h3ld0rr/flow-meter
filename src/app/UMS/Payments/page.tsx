@@ -2,7 +2,7 @@ import { Button, GlassCard, Input } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { CreditCard, DollarSign, CheckCircle } from "lucide-react";
 import { PaymentsTable } from "@/components/Payments";
-import { getPayments, getPaymentStats } from "@/lib/data/payments";
+import { getPayments, getPaymentStats } from "@/lib/queries/payments";
 
 export default async function Page() {
   const [payments, stats] = await Promise.all([
@@ -19,7 +19,7 @@ export default async function Page() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Payment Entry Form */}
-        <GlassCard className="lg:col-span-1 p-6">
+        <GlassCard className="lg:col-span-2 p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Record Payment
           </h2>
@@ -57,7 +57,7 @@ export default async function Page() {
         </GlassCard>
 
         {/* Payment Summary Cards */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="lg:gap-16 gap-6 flex flex-col py-6">
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">

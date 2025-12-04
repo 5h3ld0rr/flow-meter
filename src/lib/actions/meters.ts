@@ -4,9 +4,9 @@ import { query } from "@/lib/db";
 import { createMeterSchema, updateMeterSchema } from "@/lib/schemas/meter";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { checkSerialNumberExists, getMeterCount } from "@/lib/data/meters";
+import { checkSerialNumberExists, getMeterCount } from "@/lib/queries/meters";
 
-export async function createMeter(prevState: unknown, formData: FormData) {
+export const createMeter = async (prevState: unknown, formData: FormData) => {
   const rawData = {
     serial_number: formData.get("serial_number") as string,
     customer_id: parseInt(formData.get("customer_id") as string),
@@ -63,20 +63,19 @@ export async function createMeter(prevState: unknown, formData: FormData) {
     console.error("Error creating meter:", error);
     return { error: "Failed to create meter" };
   }
-}
+};
 
-export async function updateMeter(
+export const updateMeter = async (
   id: string,
   formData: FormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; message: string | string[] }> => {
   try {
     const validationResult = updateMeterSchema.safeParse(formData);
 
     if (!validationResult.success) {
-      const firstError = validationResult.error.issues[0];
       return {
         success: false,
-        error: firstError.message,
+        message: validationResult.error.issues.map((issue) => issue.message),
       };
     }
 
@@ -95,31 +94,22 @@ export async function updateMeter(
       params.status = validData.status;
     }
 
-    if (updates.length === 0) {
-      return { success: false, error: "No fields to update" };
-    }
-
-    updates.push("updated_at = GETDATE()");
-
     await query(
       `UPDATE Meters SET ${updates.join(", ")} WHERE meter_id = @id`,
       params
     );
 
     revalidatePath("/UMS/Meters");
-    return { success: true };
+    return { success: true, message: "Meter updated successfully" };
   } catch (error) {
     console.error("Error updating meter:", error);
-    return { success: false, error: "Failed to update meter" };
+    return { success: false, message: "Failed to update meter" };
   }
-}
+};
 
-/**
- * Delete meter (set status to inactive)
- */
-export async function deleteMeter(
+export const deleteMeter = async (
   id: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string }> => {
   try {
     await query(
       `UPDATE Meters SET status = 'inactive', updated_at = GETDATE() WHERE id = @id`,
@@ -132,4 +122,4 @@ export async function deleteMeter(
     console.error("Error deleting meter:", error);
     return { success: false, error: "Failed to delete meter" };
   }
-}
+};

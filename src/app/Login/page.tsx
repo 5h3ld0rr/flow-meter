@@ -1,18 +1,17 @@
 "use client";
 
-import { Button, GlassCard, Input, Logo } from "@/components/ui";
+import { Button, GlassCard, Input, Logo, toast } from "@/components/ui";
 import { login } from "@/lib/actions/auth";
 import { Mail, Lock } from "lucide-react";
 import { useActionState } from "react";
-import { toast } from "sonner";
 import { useEffect } from "react";
 
 export default function LoginPage() {
   const [state, action, isPending] = useActionState(login, undefined);
 
   useEffect(() => {
-    if (!state?.success && state?.message) {
-      toast[state?.success ? "success" : "error"](state?.message);
+    if (state?.message) {
+      toast("error", state.message);
     }
   }, [state]);
 
@@ -55,7 +54,7 @@ export default function LoginPage() {
             icon={<Lock size={18} />}
             loading={isPending}
           >
-            Sign In
+            {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </form>
       </GlassCard>

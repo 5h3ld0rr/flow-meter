@@ -8,7 +8,11 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
+import {
+  Toaster as Sonner,
+  type ToasterProps,
+  toast as sonner_toast,
+} from "sonner";
 
 export const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
@@ -28,4 +32,23 @@ export const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
+};
+
+export const toast = async (
+  type: "success" | "info" | "warning" | "error" | "loading",
+  message: string | string[]
+) => {
+  if (message instanceof Array) {
+    sonner_toast[type](() => (
+      <ul>
+        {message.map((error, index) => (
+          <li key={index} className="flex items-center gap-2">
+            • {error}
+          </li>
+        ))}
+      </ul>
+    ));
+    return;
+  }
+  sonner_toast[type](message);
 };

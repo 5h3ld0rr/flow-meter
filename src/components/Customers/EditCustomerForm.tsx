@@ -1,41 +1,28 @@
 "use client";
 
-import { Button, Input, Modal, ModalRef } from "@/components/ui";
+import { Button, Input, Modal, ModalRef, toast } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { updateCustomer } from "@/lib/actions/customers";
-import { toast } from "sonner";
 
-export function EditCustomerForm({ customer }: { customer: Customer }) {
+export const EditCustomerForm = ({ customer }: { customer: Customer }) => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const modalRef = useRef<ModalRef>(null);
+
+  const [state, action, isPending] = useActionState(updateCustomer, undefined);
+
+  useEffect(() => {
+    if (state?.message) {
+      if (state.success) {
+        modalRef.current?.close();
+        router.refresh();
+      }
+      toast(state.success ? "success" : "error", state.message);
+    }
+  }, [state, router]);
 
   const handleClose = () => {
     router.back();
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-
-    try {
-      const result = await updateCustomer(customer.customer_id, formData);
-
-      if (result.success) {
-        toast.success("Customer updated successfully");
-        router.push("/UMS/Customers");
-        router.refresh();
-      } else {
-        toast.error(result.error || "Failed to update customer");
-      }
-    } catch {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -46,7 +33,7 @@ export function EditCustomerForm({ customer }: { customer: Customer }) {
       onClose={handleClose}
       ref={modalRef}
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" action={action}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             name="name"
@@ -75,7 +62,7 @@ export function EditCustomerForm({ customer }: { customer: Customer }) {
             name="customer_id"
             label="Customer ID"
             defaultValue={customer.customer_id}
-            disabled
+            readOnly
           />
         </div>
         <Input
@@ -91,15 +78,15 @@ export function EditCustomerForm({ customer }: { customer: Customer }) {
             variant="primary"
             type="submit"
             fullWidth
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? "Updating..." : "Update Customer"}
+            {isPending ? "Updating..." : "Update Customer"}
           </Button>
           <Button
             variant="secondary"
             fullWidth
             onClick={() => modalRef.current?.close()}
-            disabled={isLoading}
+            disabled={isPending}
           >
             Cancel
           </Button>
@@ -107,4 +94,4 @@ export function EditCustomerForm({ customer }: { customer: Customer }) {
       </form>
     </Modal>
   );
-}
+};

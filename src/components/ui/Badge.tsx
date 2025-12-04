@@ -4,12 +4,12 @@ interface BadgeProps {
   size?: "sm" | "md";
   className?: string;
 }
-export function Badge({
+export const Badge = ({
   children,
   variant = "default",
   size = "md",
   className = "",
-}: BadgeProps) {
+}: BadgeProps) => {
   const variantClasses = {
     success:
       "bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400 dark:border dark:border-green-500/30",

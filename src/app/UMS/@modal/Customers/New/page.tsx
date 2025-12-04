@@ -1,12 +1,25 @@
 "use client";
 
-import { Button, Input, Modal, ModalRef } from "@/components/ui";
+import { Button, Input, Modal, ModalRef, toast } from "@/components/ui";
+import { createCustomer } from "@/lib/actions/customers";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 export default function Page() {
   const router = useRouter();
   const modalRef = useRef<ModalRef>(null);
+
+  const [state, action, isPending] = useActionState(createCustomer, undefined);
+
+  useEffect(() => {
+    if (state?.message) {
+      if (state.success) {
+        modalRef.current?.close();
+        router.refresh();
+      }
+      toast(state.success ? "success" : "error", state.message);
+    }
+  }, [state, router]);
 
   const handleClose = () => {
     router.back();
@@ -20,7 +33,7 @@ export default function Page() {
       onClose={handleClose}
       ref={modalRef}
     >
-      <form className="space-y-4">
+      <form className="space-y-4" action={action}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="Full Name" placeholder="John Doe" required />
           <Input

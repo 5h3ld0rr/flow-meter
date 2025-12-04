@@ -16,7 +16,7 @@ interface ButtonProps {
   type?: "button" | "submit" | "reset";
   className?: string;
 }
-export function Button({
+export const Button = ({
   children,
   icon,
   variant = "primary",
@@ -29,7 +29,7 @@ export function Button({
   href,
   type = "button",
   className = "",
-}: ButtonProps) {
+}: ButtonProps) => {
   const baseClasses =
     "font-medium rounded-lg transition-smooth focus:outline-none my-1 flex items-center gap-2 justify-" +
     align;

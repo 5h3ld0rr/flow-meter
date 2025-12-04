@@ -1,13 +1,12 @@
 "use client";
 
-import { Button, Input, Modal } from "@/components/ui";
+import { Button, Input, Modal, toast } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { updateMeter } from "@/lib/actions/meters";
-import { toast } from "sonner";
 import { ModalRef } from "@/components/ui/Modal";
 
-export function EditMeterForm({ meter }: { meter: Meter }) {
+export const EditMeterForm = ({ meter }: { meter: Meter }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const modalRef = useRef<ModalRef>(null);
@@ -22,21 +21,14 @@ export function EditMeterForm({ meter }: { meter: Meter }) {
 
     const formData = new FormData(e.currentTarget);
 
-    try {
-      const result = await updateMeter(meter.meter_id, formData);
+    const result = await updateMeter(meter.meter_id, formData);
 
-      if (result.success) {
-        toast.success("Meter updated successfully");
-        router.back();
-        router.refresh();
-      } else {
-        toast.error(result.error || "Failed to update meter");
-      }
-    } catch {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      router.back();
+      router.refresh();
     }
+    toast(result.success ? "success" : "error", result.message);
+    setIsLoading(false);
   };
 
   return (

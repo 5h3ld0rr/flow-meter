@@ -1,6 +1,6 @@
 import { Button, GlassCard, Input } from "@/components/ui";
 import { Header } from "@/components/layout";
-import { getCustomers } from "@/lib/data/customers";
+import { getCustomers } from "@/lib/queries/customers";
 import { Search } from "lucide-react";
 import { Plus } from "lucide-react";
 import { CustomersTable } from "@/components/Customers";

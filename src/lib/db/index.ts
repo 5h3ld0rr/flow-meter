@@ -20,28 +20,27 @@ const config: sql.config = {
   },
 };
 
-async function getPool(): Promise<sql.ConnectionPool> {
+const getPool = async (): Promise<sql.ConnectionPool> => {
   if (!pool) {
     pool = await sql.connect(config);
   }
   return pool;
-}
+};
 
-async function closePool(): Promise<void> {
+const closePool = async (): Promise<void> => {
   if (pool) {
     await pool.close();
     pool = null;
   }
-}
+};
 
-export async function query<T = unknown>(
+export const query = async <T = unknown>(
   queryText: string,
   params?: Record<string, unknown>
-): Promise<sql.IResult<T>> {
+): Promise<sql.IResult<T>> => {
   const connection = await getPool();
   const request = connection.request();
 
-  // Add parameters if provided
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       request.input(key, value);
@@ -49,16 +48,15 @@ export async function query<T = unknown>(
   }
 
   return await request.query(queryText);
-}
+};
 
-export async function execute<T = unknown>(
+export const execute = async <T = unknown>(
   procedureName: string,
   params?: Record<string, unknown>
-): Promise<sql.IProcedureResult<T>> {
+): Promise<sql.IProcedureResult<T>> => {
   const connection = await getPool();
   const request = connection.request();
 
-  // Add parameters if provided
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       request.input(key, value);
@@ -66,7 +64,7 @@ export async function execute<T = unknown>(
   }
 
   return await request.execute(procedureName);
-}
+};
 
 // Handle process termination
 process.on("SIGINT", async () => {

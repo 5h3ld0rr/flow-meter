@@ -9,7 +9,7 @@ export type Session = {
   userId: string;
 };
 
-export async function createSession(userId: string) {
+export const createSession = async (userId: string) => {
   const session = await encrypt({ userId });
 
   (await cookies()).set("session", session, {
@@ -18,17 +18,17 @@ export async function createSession(userId: string) {
     sameSite: "lax",
     path: "/",
   });
-}
+};
 
-export async function encrypt(payload: Session) {
+export const encrypt = async (payload: Session) => {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(encodedKey);
-}
+};
 
-export async function decrypt(session: string | undefined = "") {
+export const decrypt = async (session: string | undefined = "") => {
   try {
     const { payload } = await jwtVerify(session, encodedKey, {
       algorithms: ["HS256"],
@@ -37,8 +37,8 @@ export async function decrypt(session: string | undefined = "") {
   } catch (error: unknown) {
     console.log("Failed to verify session");
   }
-}
+};
 
-export async function deleteSession() {
+export const deleteSession = async () => {
   (await cookies()).delete("session");
-}
+};

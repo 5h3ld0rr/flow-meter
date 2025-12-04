@@ -12,13 +12,13 @@ interface StatCardProps {
   color?: "blue" | "green" | "yellow" | "red";
 }
 
-export function StatCard({
+export const StatCard = ({
   title,
   value,
   icon,
   trend,
   color = "blue",
-}: StatCardProps) {
+}: StatCardProps) => {
   const colorClasses = {
     blue: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30",
     green:

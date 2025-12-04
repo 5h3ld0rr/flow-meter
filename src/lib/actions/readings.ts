@@ -3,12 +3,12 @@
 import { query } from "@/lib/db";
 import { CreateReadingInput, createReadingSchema } from "@/lib/schemas/reading";
 import { revalidatePath } from "next/cache";
-import { getMeterLastReading } from "@/lib/data/meters";
+import { getMeterLastReading } from "@/lib/queries/meters";
 
-export async function createReading(
+export const createReading = async (
   data: CreateReadingInput,
   userId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string }> => {
   try {
     const meter = await getMeterLastReading(data.meter_id);
 
@@ -74,12 +74,12 @@ export async function createReading(
     console.error("Error creating reading:", error);
     return { success: false, error: "Failed to create reading" };
   }
-}
+};
 
-export async function validateReading(
+export const validateReading = async (
   meterId: string,
   value: number
-): Promise<{ valid: boolean; error?: string; previousReading?: number }> {
+): Promise<{ valid: boolean; error?: string; previousReading?: number }> => {
   try {
     const meter = await getMeterLastReading(meterId);
 
@@ -109,4 +109,4 @@ export async function validateReading(
     console.error("Error validating reading:", error);
     return { valid: false, error: "Validation failed" };
   }
-}
+};

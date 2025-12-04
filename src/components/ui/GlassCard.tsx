@@ -9,13 +9,13 @@ interface GlassCardProps {
   onClick?: () => void;
 }
 
-export function GlassCard({
+export const GlassCard = ({
   children,
   className = "",
   variant = "default",
   hover = false,
   onClick,
-}: GlassCardProps) {
+}: GlassCardProps) => {
   const variantClasses = {
     default: "glass",
     strong: "glass-strong",

@@ -19,7 +19,7 @@ interface HeaderProps {
   showBackButton?: boolean;
 }
 
-export function Header({ title, subtitle, showBackButton }: HeaderProps) {
+export const Header = ({ title, subtitle, showBackButton }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
 

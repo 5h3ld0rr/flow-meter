@@ -1,6 +1,6 @@
-import { getCustomerById } from "@/lib/data/customers";
+import { getCustomerById } from "@/lib/queries/customers";
 import { notFound } from "next/navigation";
-import EditCustomerForm from "@/components/Customers/EditCustomerForm";
+import { EditCustomerForm } from "@/components/Customers/EditCustomerForm";
 
 export default async function Page({
   params,

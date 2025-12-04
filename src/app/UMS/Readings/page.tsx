@@ -1,7 +1,7 @@
 import { Badge, Button, GlassCard, Input } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { Camera, Save, History } from "lucide-react";
-import { getReadings } from "@/lib/data/readings";
+import { getReadings } from "@/lib/queries/readings";
 
 export default async function Page() {
   const readings = await getReadings();

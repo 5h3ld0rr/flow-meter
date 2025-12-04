@@ -22,7 +22,7 @@ interface BarChartProps {
   xAxisKey: string;
 }
 
-export function BarChart({ data, dataKeys, xAxisKey }: BarChartProps) {
+export const BarChart = ({ data, dataKeys, xAxisKey }: BarChartProps) => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 

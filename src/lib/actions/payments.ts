@@ -3,15 +3,11 @@
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-/**
- * Record a new payment
- */
-export async function recordPayment(
+export const recordPayment = async (
   data: RecordPaymentRequest,
   userId: number
-): Promise<{ success: boolean; error?: string; paymentId?: string }> {
+): Promise<{ success: boolean; error?: string; paymentId?: string }> => {
   try {
-    // Validate input
     if (
       !data.bill_id ||
       !data.amount ||
@@ -21,7 +17,6 @@ export async function recordPayment(
       return { success: false, error: "All required fields must be provided" };
     }
 
-    // Get bill information
     const billResult = await query<{
       id: number;
       customer_id: number;
@@ -42,14 +37,12 @@ export async function recordPayment(
       return { success: false, error: "Bill is already paid" };
     }
 
-    // Generate payment ID
     const countResult = await query<{ count: number }>(
       `SELECT COUNT(*) as count FROM Payments`
     );
     const paymentCount = countResult.recordset[0].count;
     const paymentId = `PAY${String(paymentCount + 1).padStart(3, "0")}`;
 
-    // Insert payment
     await query(
       `INSERT INTO Payments (
         payment_id, bill_id, customer_id, amount, payment_method,
@@ -72,7 +65,6 @@ export async function recordPayment(
       }
     );
 
-    // Update bill status
     await query(
       `UPDATE Bills 
        SET status = 'paid', updated_at = GETDATE()
@@ -80,7 +72,6 @@ export async function recordPayment(
       { billId: data.bill_id }
     );
 
-    // Update customer balance
     await query(
       `UPDATE Customers 
        SET balance = balance - @amount, updated_at = GETDATE()
@@ -88,7 +79,6 @@ export async function recordPayment(
       { customerId: bill.customer_id, amount: data.amount }
     );
 
-    // Log activity
     await query(
       `INSERT INTO Activities (activity_type, description, customer_id, amount)
        VALUES ('payment', 'Payment received', @customerId, @amount)`,
@@ -102,4 +92,4 @@ export async function recordPayment(
     console.error("Error recording payment:", error);
     return { success: false, error: "Failed to record payment" };
   }
-}
+};

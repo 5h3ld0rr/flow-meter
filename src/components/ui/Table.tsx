@@ -14,12 +14,12 @@ interface TableProps {
   onRowClick?: (row: unknown) => void;
   className?: string;
 }
-export function Table({
+export const Table = ({
   columns,
   data,
   onRowClick,
   className = "",
-}: TableProps) {
+}: TableProps) => {
   return (
     <div className={cn("glass rounded-xl overflow-hidden", className)}>
       <div className="overflow-x-auto scrollbar-thin">

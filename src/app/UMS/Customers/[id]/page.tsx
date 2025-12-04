@@ -1,13 +1,13 @@
-import { Badge, GlassCard } from "@/components/ui";
-import { Header } from "@/components/layout";
+import { UTILITIES } from "@/constants";
 import { getCustomerById } from "@/lib/data/customers";
 import { getMeters } from "@/lib/data/meters";
 import { getPayments } from "@/lib/data/payments";
-import { getBills } from "@/lib/data/billing";
-import { notFound } from "next/navigation";
-import { Mail, Phone, MapPin, Calendar } from "lucide-react";
-import { UTILITIES } from "@/constants";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Header } from "@/components/layout";
+import { Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { getBills } from "@/lib/queries/billing";
+import { Badge, GlassCard } from "@/components/ui";
 
 export default async function Page({
   params,
@@ -41,6 +41,7 @@ export default async function Page({
       <Header
         title={customer.name}
         subtitle={`Customer ID: ${customer.customer_id}`}
+        showBackButton
       />
 
       {/* Customer Overview */}

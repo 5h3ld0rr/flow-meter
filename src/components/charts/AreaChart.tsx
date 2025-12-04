@@ -21,7 +21,7 @@ interface AreaChartProps {
   }[];
   xAxisKey: string;
 }
-export function AreaChart({ data, dataKeys, xAxisKey }: AreaChartProps) {
+export const AreaChart = ({ data, dataKeys, xAxisKey }: AreaChartProps) => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   return (

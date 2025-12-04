@@ -1,5 +1,5 @@
 import { EditMeterForm } from "@/components/Meters";
-import { getMeterById } from "@/lib/data/meters";
+import { getMeterById } from "@/lib/queries/meters";
 import { notFound } from "next/navigation";
 
 export default async function Page({

@@ -2,7 +2,7 @@
 
 import { Badge, Table } from "@/components/ui";
 
-export function PaymentsTable({ data }: { data: Payment[] }) {
+export const PaymentsTable = ({ data }: { data: Payment[] }) => {
   const columns = [
     {
       key: "payment_id",

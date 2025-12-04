@@ -29,7 +29,7 @@ const REPORT_TABS = [
     icon: <AlertTriangle size={18} />,
   },
 ];
-export function ActionBar() {
+export const ActionBar = () => {
   const pathname = usePathname();
 
   return (

@@ -4,12 +4,12 @@ interface ToggleProps {
   label?: string;
   disabled?: boolean;
 }
-export function Toggle({
+export const Toggle = ({
   checked,
   onChange,
   label,
   disabled = false,
-}: ToggleProps) {
+}: ToggleProps) => {
   return (
     <label className="flex items-center cursor-pointer">
       <div className="relative">

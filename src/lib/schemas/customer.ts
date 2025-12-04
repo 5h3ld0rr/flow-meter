@@ -1,47 +1,36 @@
 import { z } from "zod";
 
-/**
- * Customer validation schemas using Zod
- */
-
-// Phone number regex - allows various formats
 const phoneRegex = /^\+?[\d\s\-()]+$/;
 
-// Base customer schema
-export const customerSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must be less than 100 characters"),
-
-  email: z
-    .string()
-    .email("Invalid email format")
-    .max(100, "Email must be less than 100 characters"),
-
+export const customerDbSchema = z.object({
+  customer_id: z.string("Invalid customer ID"),
+  name: z.string().min(2).max(100),
+  email: z.email("Invalid email"),
   phone: z
     .string()
-    .regex(phoneRegex, "Invalid phone number format")
+    .regex(phoneRegex)
     .refine(
-      (phone) => phone.replace(/\D/g, "").length >= 10,
-      "Phone number must have at least 10 digits"
+      (p) => /^\+?\d{10,15}$/.test(p.replace(/\D/g, "")),
+      "Invalid phone"
     ),
-
-  address: z
-    .string()
-    .min(5, "Address must be at least 5 characters")
-    .max(500, "Address must be less than 500 characters"),
+  address: z.string().min(5, "Invalid address").max(500, "Invalid address"),
+  status: z.enum(["active", "inactive", "overdue"] as const, "Invalid status"),
+  balance: z.number("Invalid balance"),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
-// Schema for creating a new customer
-export const createCustomerSchema = customerSchema;
-
-// Schema for updating a customer (all fields optional)
-export const updateCustomerSchema = customerSchema.partial().extend({
-  status: z.enum(["active", "inactive", "suspended"]).optional(),
+export const createCustomerSchema = customerDbSchema.pick({
+  name: true,
+  email: true,
+  phone: true,
+  address: true,
 });
 
-// Type exports
-export type CustomerInput = z.infer<typeof customerSchema>;
+export const updateCustomerSchema = createCustomerSchema.extend({
+  customer_id: customerDbSchema.shape.customer_id,
+});
+
+export type Customer = z.infer<typeof customerDbSchema>;
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

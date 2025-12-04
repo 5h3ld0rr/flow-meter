@@ -9,7 +9,7 @@ import {
   getTopConsumers,
   getRecentActivities,
   getUtilityDistribution,
-} from "@/lib/data/dashboard";
+} from "@/lib/queries/dashboard";
 
 export const metadata = {
   title: "Dashboard",

@@ -3,7 +3,7 @@
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function calculateBill(meterId: number, consumption: number) {
+export const calculateBill = async (meterId: number, consumption: number) => {
   try {
     const meterResult = await query<{ utility_type: string }>(
       `SELECT utility_type FROM Meters WHERE id = @meterId`,
@@ -43,29 +43,27 @@ export async function calculateBill(meterId: number, consumption: number) {
       totalAmount: 0.0,
     };
   }
-}
+};
 
-export async function generateBill(data: {
+export const generateBill = async (data: {
   customerId: number;
   meterId: number;
   billingPeriodStart: Date;
   billingPeriodEnd: Date;
   consumption: number;
-}) {
+}) => {
   try {
     const { baseAmount, taxAmount, totalAmount } = await calculateBill(
       data.meterId,
       data.consumption
     );
 
-    // Generate bill ID
     const countResult = await query<{ count: number }>(
       `SELECT COUNT(*) as count FROM Bills`
     );
     const billCount = countResult.recordset[0].count;
     const billId = `BILL-${String(billCount + 1).padStart(6, "0")}`;
 
-    // Calculate due date (30 days from now)
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
 
@@ -92,7 +90,6 @@ export async function generateBill(data: {
       }
     );
 
-    // Update customer balance
     await query(
       `UPDATE Customers 
        SET balance = balance + @totalAmount, updated_at = GETDATE()
@@ -100,7 +97,6 @@ export async function generateBill(data: {
       { totalAmount, customerId: data.customerId }
     );
 
-    // Log activity
     await query(
       `INSERT INTO Activities (activity_type, description, customer_id, amount)
        VALUES ('billing', 'New bill generated', @customerId, @totalAmount)`,
@@ -113,4 +109,4 @@ export async function generateBill(data: {
     console.error("Error generating bill:", error);
     return { success: false, error: "Failed to generate bill" };
   }
-}
+};

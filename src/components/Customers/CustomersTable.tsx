@@ -120,7 +120,7 @@ const columns = [
   },
 ];
 
-export function CustomersTable({ data }: { data: Customer[] }) {
+export const CustomersTable = ({ data }: { data: Customer[] }) => {
   return (
     <GlassCard>
       <Table columns={columns} data={data} />
