@@ -1,31 +1,21 @@
 "use server";
 
-import { query } from "@/lib/db";
+import { execute } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import {
+  getMeterUtilityType,
+  getTariffRate,
+  getBillCount,
+} from "@/lib/data/billing";
 
 export const calculateBill = async (meterId: number, consumption: number) => {
   try {
-    const meterResult = await query<{ utility_type: string }>(
-      `SELECT utility_type FROM Meters WHERE id = @meterId`,
-      { meterId }
-    );
-
-    if (meterResult.recordset.length === 0) {
+    const utilityType = await getMeterUtilityType(meterId);
+    if (!utilityType) {
       throw new Error("Meter not found");
     }
 
-    const utilityType = meterResult.recordset[0].utility_type;
-
-    const tariffResult = await query<{ rate_per_unit: number }>(
-      `SELECT rate_per_unit FROM Tariffs WHERE utility_type = @utilityType`,
-      { utilityType }
-    );
-
-    const ratePerUnit =
-      tariffResult.recordset.length > 0
-        ? tariffResult.recordset[0].rate_per_unit
-        : 0.15;
-
+    const ratePerUnit = await getTariffRate(utilityType);
     const baseAmount = consumption * ratePerUnit;
     const taxAmount = baseAmount * 0.1;
     const totalAmount = baseAmount + taxAmount;
@@ -58,50 +48,32 @@ export const generateBill = async (data: {
       data.consumption
     );
 
-    const countResult = await query<{ count: number }>(
-      `SELECT COUNT(*) as count FROM Bills`
-    );
-    const billCount = countResult.recordset[0].count;
+    const billCount = await getBillCount();
     const billId = `BILL-${String(billCount + 1).padStart(6, "0")}`;
 
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
 
-    // Insert bill
-    await query(
-      `INSERT INTO Bills (
-        bill_id, customer_id, meter_id, billing_period_start, billing_period_end,
-        consumption, base_amount, tax_amount, total_amount, status, due_date
-      ) VALUES (
-        @billId, @customerId, @meterId, @billingPeriodStart, @billingPeriodEnd,
-        @consumption, @baseAmount, @taxAmount, @totalAmount, 'pending', @dueDate
-      )`,
-      {
-        billId,
-        customerId: data.customerId,
-        meterId: data.meterId,
-        billingPeriodStart: data.billingPeriodStart,
-        billingPeriodEnd: data.billingPeriodEnd,
-        consumption: data.consumption,
-        baseAmount,
-        taxAmount,
-        totalAmount,
-        dueDate,
-      }
-    );
+    // Call stored procedure to insert bill - trigger handles activity logging
+    await execute("sp_CreateBill", {
+      billId,
+      customerId: data.customerId,
+      meterId: data.meterId,
+      billingPeriodStart: data.billingPeriodStart,
+      billingPeriodEnd: data.billingPeriodEnd,
+      consumption: data.consumption,
+      baseAmount,
+      taxAmount,
+      totalAmount,
+      dueDate,
+    });
 
-    await query(
-      `UPDATE Customers 
-       SET balance = balance + @totalAmount, updated_at = GETDATE()
-       WHERE id = @customerId`,
-      { totalAmount, customerId: data.customerId }
-    );
-
-    await query(
-      `INSERT INTO Activities (activity_type, description, customer_id, amount)
-       VALUES ('billing', 'New bill generated', @customerId, @totalAmount)`,
-      { customerId: data.customerId, totalAmount }
-    );
+    // Update customer balance
+    await execute("sp_UpdateCustomerBalance", {
+      customerId: data.customerId,
+      amount: totalAmount,
+      operation: "add",
+    });
 
     revalidatePath("/UMS/Billing");
     return { success: true, billId };

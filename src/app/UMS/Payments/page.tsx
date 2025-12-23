@@ -2,7 +2,7 @@ import { Button, GlassCard, Input } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { CreditCard, DollarSign, CheckCircle } from "lucide-react";
 import { PaymentsTable } from "@/components/Payments";
-import { getPayments, getPaymentStats } from "@/lib/queries/payments";
+import { getPayments, getPaymentStats } from "@/lib/data/payments";
 
 export default async function Page() {
   const [payments, stats] = await Promise.all([

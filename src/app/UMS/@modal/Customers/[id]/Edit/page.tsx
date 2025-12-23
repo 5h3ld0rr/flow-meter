@@ -1,4 +1,4 @@
-import { getCustomerById } from "@/lib/queries/customers";
+import { getCustomerById } from "@/lib/data/customers";
 import { notFound } from "next/navigation";
 import { EditCustomerForm } from "@/components/Customers/EditCustomerForm";
 

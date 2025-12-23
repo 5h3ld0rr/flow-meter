@@ -38,8 +38,6 @@ export const Modal = ({
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
-    console.log("closing");
-
     setIsOpen(false);
     setTimeout(() => {
       onClose();

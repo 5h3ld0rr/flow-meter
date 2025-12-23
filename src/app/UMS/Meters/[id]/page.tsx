@@ -1,6 +1,6 @@
 import { Badge, Button, GlassCard } from "@/components/ui";
 import { Header } from "@/components/layout";
-import { getMeterById } from "@/lib/queries/meters";
+import { getMeterById } from "@/lib/data/meters";
 import { getReadings } from "@/lib/data/readings";
 import { getBills } from "@/lib/data/billing";
 import { notFound } from "next/navigation";

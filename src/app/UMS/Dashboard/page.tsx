@@ -9,7 +9,7 @@ import {
   getTopConsumers,
   getRecentActivities,
   getUtilityDistribution,
-} from "@/lib/queries/dashboard";
+} from "@/lib/data/dashboard";
 
 export const metadata = {
   title: "Dashboard",
@@ -156,12 +156,15 @@ export default async function Page() {
                     {activity.customer}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {activity.action}
+                    {activity.description}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold  text-gray-800 dark:text-slate-200">
-                    {activity.amount || activity.value}
+                    {activity.activity_type === "payment" ||
+                    activity.activity_type === "bill"
+                      ? "Rs. " + activity.amount
+                      : activity.amount ?? "\u00A0"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {activity.time}

@@ -1,7 +1,7 @@
 import { Badge, Button, GlassCard, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { FileText, Calculator, Send, ArrowLeft, Verified } from "lucide-react";
-import { getBills } from "@/lib/queries/billing";
+import { getBills } from "@/lib/data/billing";
 import { Header } from "@/components/layout";
 
 export default async function Page({

@@ -1,7 +1,8 @@
 "use server";
 
-import { query } from "@/lib/db";
+import { execute } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { getBillForPayment, getPaymentCount } from "@/lib/data/payments";
 
 export const recordPayment = async (
   data: RecordPaymentRequest,
@@ -17,73 +18,44 @@ export const recordPayment = async (
       return { success: false, error: "All required fields must be provided" };
     }
 
-    const billResult = await query<{
-      id: number;
-      customer_id: number;
-      total_amount: number;
-      status: string;
-    }>(
-      `SELECT id, customer_id, total_amount, status FROM Bills WHERE id = @billId`,
-      { billId: data.bill_id }
-    );
+    const bill = await getBillForPayment(String(data.bill_id));
 
-    if (billResult.recordset.length === 0) {
+    if (!bill) {
       return { success: false, error: "Bill not found" };
     }
-
-    const bill = billResult.recordset[0];
 
     if (bill.status === "paid") {
       return { success: false, error: "Bill is already paid" };
     }
 
-    const countResult = await query<{ count: number }>(
-      `SELECT COUNT(*) as count FROM Payments`
-    );
-    const paymentCount = countResult.recordset[0].count;
+    const paymentCount = await getPaymentCount();
     const paymentId = `PAY${String(paymentCount + 1).padStart(3, "0")}`;
 
-    await query(
-      `INSERT INTO Payments (
-        payment_id, bill_id, customer_id, amount, payment_method,
-        transaction_reference, payment_date, status, notes, created_by
-      )
-      VALUES (
-        @paymentId, @billId, @customerId, @amount, @paymentMethod,
-        @transactionRef, @paymentDate, 'completed', @notes, @userId
-      )`,
-      {
-        paymentId,
-        billId: data.bill_id,
-        customerId: bill.customer_id,
-        amount: data.amount,
-        paymentMethod: data.payment_method,
-        transactionRef: data.transaction_reference || null,
-        paymentDate: data.payment_date,
-        notes: data.notes || null,
-        userId,
-      }
-    );
+    // Call stored procedure to insert payment - trigger handles activity logging
+    await execute("sp_CreatePayment", {
+      paymentId,
+      billId: data.bill_id,
+      customerId: bill.customer_id,
+      amount: data.amount,
+      paymentMethod: data.payment_method,
+      transactionRef: data.transaction_reference || null,
+      paymentDate: data.payment_date,
+      notes: data.notes || null,
+      userId,
+    });
 
-    await query(
-      `UPDATE Bills 
-       SET status = 'paid', updated_at = GETDATE()
-       WHERE id = @billId`,
-      { billId: data.bill_id }
-    );
+    // Update bill status
+    await execute("sp_UpdateBillStatus", {
+      billId: data.bill_id,
+      status: "paid",
+    });
 
-    await query(
-      `UPDATE Customers 
-       SET balance = balance - @amount, updated_at = GETDATE()
-       WHERE id = @customerId`,
-      { customerId: bill.customer_id, amount: data.amount }
-    );
-
-    await query(
-      `INSERT INTO Activities (activity_type, description, customer_id, amount)
-       VALUES ('payment', 'Payment received', @customerId, @amount)`,
-      { customerId: bill.customer_id, amount: data.amount }
-    );
+    // Update customer balance
+    await execute("sp_UpdateCustomerBalance", {
+      customerId: bill.customer_id,
+      amount: data.amount,
+      operation: "subtract",
+    });
 
     revalidatePath("/UMS/Payments");
     revalidatePath("/UMS/Dashboard");

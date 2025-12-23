@@ -1,15 +1,14 @@
 "use server";
 
-import { query } from "@/lib/db";
+import { execute } from "@/lib/db";
 import { createMeterSchema, updateMeterSchema } from "@/lib/schemas/meter";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { checkSerialNumberExists, getMeterCount } from "@/lib/queries/meters";
+import { checkSerialNumberExists, getMeterCount } from "@/lib/data/meters";
 
 export const createMeter = async (prevState: unknown, formData: FormData) => {
   const rawData = {
     serial_number: formData.get("serial_number") as string,
-    customer_id: parseInt(formData.get("customer_id") as string),
+    customer_id: formData.get("customer_id") as string,
     utility_type: formData.get("utility_type") as string,
     location: formData.get("location") as string,
     install_date: formData.get("install_date")
@@ -38,39 +37,36 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     const meterCount = await getMeterCount();
     const meterId = `M${String(meterCount + 1).padStart(3, "0")}`;
 
-    await query(
-      `INSERT INTO Meters (meter_id, serial_number, customer_id, utility_type, location, status, install_date)
-       VALUES (@meterId, @serialNumber, @customerId, @utilityType, @location, 'active', @installDate)`,
-      {
-        meterId,
-        serialNumber: data.serial_number,
-        customerId: data.customer_id,
-        utilityType: data.utility_type,
-        location: data.location,
-        installDate: data.install_date,
-      }
-    );
+    // Call stored procedure directly - trigger handles activity logging
+    await execute("sp_CreateMeter", {
+      meterId,
+      serialNumber: data.serial_number,
+      customerId: data.customer_id,
+      utilityType: data.utility_type,
+      location: data.location,
+      installDate: data.install_date,
+    });
 
-    await query(
-      `INSERT INTO Activities (activity_type, description, customer_id)
-       VALUES ('meter', 'New meter installed', @customerId)`,
-      { customerId: data.customer_id }
-    );
-
-    revalidatePath("/UMS/Meters");
     redirect("/UMS/Meters");
   } catch (error) {
     console.error("Error creating meter:", error);
-    return { error: "Failed to create meter" };
+    return { success: false, error: "Failed to create meter" };
   }
 };
 
-export const updateMeter = async (
-  id: string,
-  formData: FormData
-): Promise<{ success: boolean; message: string | string[] }> => {
+export const updateMeter = async (prevState: unknown, formData: FormData) => {
   try {
-    const validationResult = updateMeterSchema.safeParse(formData);
+    const rawData = {
+      meter_id: formData.get("meter_id") as string,
+      serial_number: formData.get("serial_number") as string,
+      customer_id: formData.get("customer_id") as string,
+      utility_type: formData.get("utility_type") as string,
+      location: formData.get("location") as string,
+      install_date: new Date(formData.get("install_date") as string),
+      status: formData.get("status") as string,
+    };
+
+    const validationResult = updateMeterSchema.safeParse(rawData);
 
     if (!validationResult.success) {
       return {
@@ -79,27 +75,9 @@ export const updateMeter = async (
       };
     }
 
-    const validData = validationResult.data;
+    // Call stored procedure directly
+    await execute("sp_UpdateMeter", validationResult.data);
 
-    const updates: string[] = [];
-    const params: Record<string, string | number> = { id };
-
-    if (validData.location) {
-      updates.push("location = @location");
-      params.location = validData.location;
-    }
-
-    if (validData.status) {
-      updates.push("status = @status");
-      params.status = validData.status;
-    }
-
-    await query(
-      `UPDATE Meters SET ${updates.join(", ")} WHERE meter_id = @id`,
-      params
-    );
-
-    revalidatePath("/UMS/Meters");
     return { success: true, message: "Meter updated successfully" };
   } catch (error) {
     console.error("Error updating meter:", error);
@@ -108,18 +86,15 @@ export const updateMeter = async (
 };
 
 export const deleteMeter = async (
-  id: number
-): Promise<{ success: boolean; error?: string }> => {
+  id: string
+): Promise<{ success: boolean; message: string }> => {
   try {
-    await query(
-      `UPDATE Meters SET status = 'inactive', updated_at = GETDATE() WHERE id = @id`,
-      { id }
-    );
+    // Call stored procedure directly
+    await execute("sp_DeleteMeter", { id });
 
-    revalidatePath("/UMS/Meters");
-    return { success: true };
+    return { success: true, message: "Meter deleted successfully" };
   } catch (error) {
     console.error("Error deleting meter:", error);
-    return { success: false, error: "Failed to delete meter" };
+    return { success: false, message: "Failed to delete meter" };
   }
 };

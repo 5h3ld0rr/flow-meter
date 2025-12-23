@@ -4,15 +4,7 @@ import {
   createCustomerSchema,
   updateCustomerSchema,
 } from "@/lib/schemas/customer";
-import {
-  checkEmailExists,
-  getCustomerCount,
-  getCustomerIdByCustomerId,
-  createCustomerRecord,
-  updateCustomerRecord,
-  deleteCustomerRecord,
-} from "@/lib/queries/customers";
-import { logActivity } from "../queries/activity";
+import { execute } from "@/lib/db";
 
 export const createCustomer = async (
   prevState: unknown,
@@ -29,40 +21,27 @@ export const createCustomer = async (
     const validationResult = createCustomerSchema.safeParse(rawData);
 
     if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return {
         success: false,
-        message: validationResult.error.issues.map((issue) => issue.message),
+        error: firstError.message,
       };
     }
 
     const data = validationResult.data;
 
-    const emailExists = await checkEmailExists(data.email);
-    if (emailExists) {
-      return { success: false, message: "Email already exists" };
-    }
-
-    const customerCount = await getCustomerCount();
-    const customerId = `C${String(customerCount + 1).padStart(3, "0")}`;
-
-    await createCustomerRecord({
-      customerId,
+    // Call stored procedure directly - trigger handles activity logging
+    await execute("sp_CreateCustomer", {
       name: data.name,
       email: data.email,
       phone: data.phone,
       address: data.address,
     });
 
-    const newCustomerId = await getCustomerIdByCustomerId(customerId);
-
-    if (newCustomerId) {
-      await logActivity("customer", newCustomerId, "New customer registered");
-    }
-
     return { success: true, message: "Customer created successfully" };
   } catch (error) {
     console.error("Error creating customer:", error);
-    return { success: false, message: "Failed to create customer" };
+    return { success: false, error: "Failed to create customer" };
   }
 };
 
@@ -88,8 +67,8 @@ export const updateCustomer = async (
       };
     }
 
-    const data = validationResult.data;
-    await updateCustomerRecord(data);
+    // Call stored procedure directly
+    await execute("sp_UpdateCustomer", validationResult.data);
 
     return { success: true, message: "Customer updated successfully" };
   } catch (error) {
@@ -102,7 +81,8 @@ export const deleteCustomer = async (
   id: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    await deleteCustomerRecord(id);
+    // Call stored procedure directly
+    await execute("sp_DeleteCustomer", { id });
 
     return { success: true, message: "Customer deleted successfully" };
   } catch (error) {

@@ -2,7 +2,7 @@ import { Badge, Button, GlassCard } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { UTILITIES } from "@/constants";
 import { Plus, Radio } from "lucide-react";
-import { getMeters } from "@/lib/queries/meters";
+import { getMeters } from "@/lib/data/meters";
 import { redirect, RedirectType } from "next/navigation";
 import { cn } from "@/lib/utils";
 

@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout";
 import { StatCard } from "@/components/charts";
 import { TrendingUp, Users, DollarSign, AlertTriangle } from "lucide-react";
-import { getDashboardStats } from "@/lib/queries/dashboard";
+import { getDashboardStats } from "@/lib/data/dashboard";
 import { ActionBar } from "@/components/Reports";
 
 export default async function Layout({

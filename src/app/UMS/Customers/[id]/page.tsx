@@ -2,12 +2,12 @@ import { UTILITIES } from "@/constants";
 import { getCustomerById } from "@/lib/data/customers";
 import { getMeters } from "@/lib/data/meters";
 import { getPayments } from "@/lib/data/payments";
-import Link from "next/link";
+import { getBills } from "@/lib/data/billing";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { GlassCard, Badge } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { Mail, Phone, MapPin, Calendar } from "lucide-react";
-import { getBills } from "@/lib/queries/billing";
-import { Badge, GlassCard } from "@/components/ui";
 
 export default async function Page({
   params,

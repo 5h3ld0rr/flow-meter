@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart, AreaChart } from "@/components/charts";
-import { getRevenueReport, getRegionalReport } from "@/lib/queries/reports";
+import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
 
 export default async function Page() {
   const [revenueData, regionalData] = await Promise.all([
