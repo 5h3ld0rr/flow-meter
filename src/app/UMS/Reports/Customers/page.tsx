@@ -1,34 +1,36 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart, AreaChart } from "@/components/charts";
-import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
+import { getCustomerReport, getRegionalReport } from "@/lib/data/reports";
+import { AIAnalysisPanel } from "@/components/Reports";
 
 export default async function Page() {
-  const [revenueData, regionalData] = await Promise.all([
-    getRevenueReport(),
+  const [customerData, regionalData] = await Promise.all([
+    getCustomerReport(),
     getRegionalReport(),
   ]);
+
   return (
     <>
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Customers Trend (Last 6 Months)
+            Customer Growth Trend
           </h3>
           <div className="h-64">
             <AreaChart
-              data={revenueData}
+              data={customerData}
               xAxisKey="month"
               dataKeys={[
                 {
-                  key: "revenue",
-                  color: "#b15eff",
-                  name: "Revenue",
+                  key: "customers",
+                  color: "#10B981",
+                  name: "New Customers",
                 },
                 {
                   key: "target",
-                  color: "#51a2ff",
-                  name: "Target",
+                  color: "#94A3B8",
+                  name: "Target Growth",
                 },
               ]}
             />
@@ -37,7 +39,7 @@ export default async function Page() {
 
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Regional Performance
+            Customers by Region
           </h3>
           <div className="h-64">
             <BarChart
@@ -45,9 +47,9 @@ export default async function Page() {
               xAxisKey="region"
               dataKeys={[
                 {
-                  key: "revenue",
+                  key: "customers",
                   color: "#3B82F6",
-                  name: "Revenue ($)",
+                  name: "Total Customers",
                 },
               ]}
             />
@@ -56,58 +58,60 @@ export default async function Page() {
       </div>
 
       {/* Detailed Tables */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Top Consumers by Region
+          Regional Customer Distribution
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Region
+                  Region Area
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Customers
+                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Total Customers
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Consumption
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Revenue
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Growth
+                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Share %
                 </th>
               </tr>
             </thead>
             <tbody>
-              {regionalData.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                >
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                    {row.region} District
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.customers}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.consumption.toLocaleString()} kWh
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${row.revenue.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                    +8%
-                  </td>
-                </tr>
-              ))}
+              {regionalData.map((row, index) => {
+                const totalCustomers = regionalData.reduce(
+                  (sum, r) => sum + r.customers,
+                  0
+                );
+                const share =
+                  totalCustomers > 0
+                    ? ((row.customers / totalCustomers) * 100).toFixed(1)
+                    : "0";
+
+                return (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+                  >
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
+                      {row.region || "Central"} Area
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
+                      {row.customers}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white font-semibold">
+                      {share}%
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </GlassCard>
+
+      {/* AI Analysis Panel */}
+      <AIAnalysisPanel reportType="customers" />
     </>
   );
 }

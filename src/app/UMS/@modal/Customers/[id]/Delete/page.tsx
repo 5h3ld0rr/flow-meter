@@ -2,17 +2,16 @@
 
 import { Button, Modal, ModalRef, toast } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, use, useState } from "react";
 import { deleteCustomer } from "@/lib/actions/customers";
 import { AlertTriangle } from "lucide-react";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [customerId, setCustomerId] = useState<string>("");
   const modalRef = useRef<ModalRef>(null);
 
-  params.then((p) => setCustomerId(p.id));
+  const { id: customerId } = use(params);
 
   const handleClose = () => {
     router.back();
@@ -22,13 +21,19 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     if (!customerId) return;
 
     setIsLoading(true);
-    const result = await deleteCustomer(customerId);
-    if (result.success) {
-      modalRef.current?.close();
-      router.refresh();
+
+    try {
+      const result = await deleteCustomer(customerId);
+      if (result.success) {
+        modalRef.current?.close();
+        router.refresh();
+      }
+      toast(result.success ? "success" : "error", result.message);
+    } catch {
+      toast("error", "An error occurred while deleting the customer.");
+    } finally {
+      setIsLoading(false);
     }
-    toast(result.success ? "success" : "error", result.message);
-    setIsLoading(false);
   };
 
   return (

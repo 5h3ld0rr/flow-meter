@@ -19,20 +19,75 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/Button";
 
 const NAV_ITEMS = [
-  { path: "/UMS/Dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/UMS/Customers", label: "Customers", icon: Users },
-  { path: "/UMS/Meters", label: "Meters", icon: Gauge },
-  { path: "/UMS/Readings", label: "Readings", icon: ClipboardList },
-  { path: "/UMS/Billing", label: "Billing", icon: FileText },
-  { path: "/UMS/Payments", label: "Payments", icon: CreditCard },
-  { path: "/UMS/Reports", label: "Reports", icon: BarChart3 },
-  { path: "/UMS/Settings", label: "Settings", icon: Settings },
+  {
+    path: "/UMS/Dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    roles: ["admin", "staff", "officer", "cashier", "manager"],
+  },
+  {
+    path: "/UMS/Customers",
+    label: "Customers",
+    icon: Users,
+    roles: ["admin", "staff", "manager"],
+  },
+  {
+    path: "/UMS/Meters",
+    label: "Meters",
+    icon: Gauge,
+    roles: ["admin", "staff"],
+  },
+  {
+    path: "/UMS/Readings",
+    label: "Readings",
+    icon: ClipboardList,
+    roles: ["admin", "officer"],
+  },
+  {
+    path: "/UMS/Billing",
+    label: "Billing",
+    icon: FileText,
+    roles: ["admin", "cashier"],
+  },
+  {
+    path: "/UMS/Payments",
+    label: "Payments",
+    icon: CreditCard,
+    roles: ["admin", "cashier"],
+  },
+  {
+    path: "/UMS/Reports",
+    label: "Reports",
+    icon: BarChart3,
+    roles: ["admin", "manager"],
+  },
+  {
+    path: "/UMS/Users",
+    label: "Users",
+    icon: Users,
+    roles: ["admin"],
+  },
+  {
+    path: "/UMS/Settings",
+    label: "Settings",
+    icon: Settings,
+    roles: ["admin", "staff"],
+  },
 ];
 
-export const Sidebar = () => {
+interface SidebarProps {
+  role?: string;
+}
+
+export const Sidebar = ({ role = "staff" }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const filteredNavItems = NAV_ITEMS.filter((item) =>
+    item.roles.includes(role as any)
+  );
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -64,7 +119,7 @@ export const Sidebar = () => {
           </div>
           {/* Navigation */}
           <nav className="flex-1 pt-8 px-4 overflow-y-auto scrollbar-thin">
-            {NAV_ITEMS.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = pathname.includes(item.path);
               return (
                 <Button
@@ -94,4 +149,4 @@ export const Sidebar = () => {
       </aside>
     </>
   );
-}
+};

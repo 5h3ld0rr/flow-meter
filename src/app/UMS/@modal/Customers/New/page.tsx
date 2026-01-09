@@ -83,13 +83,19 @@ export default function Page() {
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button variant="primary" type="submit" fullWidth>
-            Add Customer
+          <Button
+            variant="primary"
+            type="submit"
+            fullWidth
+            disabled={isPending}
+          >
+            {isPending ? "Creating..." : "Create Customer"}
           </Button>
           <Button
             variant="secondary"
             fullWidth
             onClick={() => modalRef.current?.close()}
+            disabled={isPending}
           >
             Cancel
           </Button>

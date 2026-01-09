@@ -1,6 +1,13 @@
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "success" | "warning" | "danger" | "info" | "default";
+  variant?:
+    | "success"
+    | "warning"
+    | "danger"
+    | "info"
+    | "default"
+    | "purple"
+    | "orange";
   size?: "sm" | "md";
   className?: string;
 }
@@ -18,6 +25,10 @@ export const Badge = ({
     danger:
       "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400 dark:border dark:border-red-500/30",
     info: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 dark:border dark:border-blue-500/30",
+    purple:
+      "bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400 dark:border dark:border-purple-500/30",
+    orange:
+      "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400 dark:border dark:border-orange-500/30",
     default:
       "bg-gray-100 text-gray-800 dark:bg-gray-100/5 dark:text-slate-300 dark:border dark:border-dark-border",
   };
@@ -37,4 +48,4 @@ export const Badge = ({
       {children}
     </span>
   );
-}
+};

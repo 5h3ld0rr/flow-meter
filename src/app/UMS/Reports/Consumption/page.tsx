@@ -1,10 +1,11 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart, AreaChart } from "@/components/charts";
-import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
+import { getConsumptionReport, getRegionalReport } from "@/lib/data/reports";
+import { AIAnalysisPanel } from "@/components/Reports";
 
 export default async function Page() {
-  const [revenueData, regionalData] = await Promise.all([
-    getRevenueReport(),
+  const [consumptionData, regionalData] = await Promise.all([
+    getConsumptionReport(),
     getRegionalReport(),
   ]);
 
@@ -14,22 +15,22 @@ export default async function Page() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Consumption Trend (Last 6 Months)
+            Total Consumption Trend (kWh)
           </h3>
           <div className="h-64">
             <AreaChart
-              data={revenueData}
+              data={consumptionData}
               xAxisKey="month"
               dataKeys={[
                 {
-                  key: "revenue",
-                  color: "#b15eff",
-                  name: "Revenue",
+                  key: "consumption",
+                  color: "#3B82F6",
+                  name: "Actual Consumption",
                 },
                 {
                   key: "target",
-                  color: "#51a2ff",
-                  name: "Target",
+                  color: "#94A3B8",
+                  name: "Forecasted",
                 },
               ]}
             />
@@ -38,7 +39,7 @@ export default async function Page() {
 
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Regional Performance
+            Consumption by Region
           </h3>
           <div className="h-64">
             <BarChart
@@ -46,9 +47,9 @@ export default async function Page() {
               xAxisKey="region"
               dataKeys={[
                 {
-                  key: "revenue",
-                  color: "#3B82F6",
-                  name: "Revenue ($)",
+                  key: "consumption",
+                  color: "#51a2ff",
+                  name: "Region Consumption (kWh)",
                 },
               ]}
             />
@@ -57,28 +58,25 @@ export default async function Page() {
       </div>
 
       {/* Detailed Tables */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Top Consumers by Region
+          Detailed Regional Consumption Analysis
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Region
+                  Region Area
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Customers
+                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Total Meters
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Consumption
+                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Consumption (kWh)
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Revenue
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Growth
+                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Avg per Meter
                 </th>
               </tr>
             </thead>
@@ -89,19 +87,18 @@ export default async function Page() {
                   className="border-b border-gray-100 dark:border-gray-800 last:border-0"
                 >
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                    {row.region} District
+                    {row.region || "Central"} Area
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
                     {row.customers}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.consumption.toLocaleString()} kWh
+                  <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white font-semibold">
+                    {row.consumption.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${row.revenue.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                    +8%
+                  <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400">
+                    {row.customers > 0
+                      ? (row.consumption / row.customers).toFixed(2)
+                      : "0.00"}
                   </td>
                 </tr>
               ))}
@@ -109,6 +106,9 @@ export default async function Page() {
           </table>
         </div>
       </GlassCard>
+
+      {/* AI Analysis Panel */}
+      <AIAnalysisPanel reportType="consumption" />
     </>
   );
 }

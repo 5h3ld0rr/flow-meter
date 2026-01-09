@@ -1,6 +1,7 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart, AreaChart } from "@/components/charts";
 import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
+import { AIAnalysisPanel } from "@/components/Reports";
 
 export default async function Page() {
   const [revenueData, regionalData] = await Promise.all([
@@ -57,7 +58,7 @@ export default async function Page() {
       </div>
 
       {/* Detailed Tables */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Top Consumers by Region
         </h3>
@@ -109,6 +110,9 @@ export default async function Page() {
           </table>
         </div>
       </GlassCard>
+
+      {/* AI Analysis Panel */}
+      <AIAnalysisPanel reportType="revenue" />
     </>
   );
 }

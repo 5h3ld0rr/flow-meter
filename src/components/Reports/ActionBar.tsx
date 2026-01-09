@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui";
+import { PDFExportButton } from "./PDFExportButton";
 import {
   DollarSign,
   TrendingUp,
   Users,
   AlertTriangle,
   Filter,
-  Download,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -29,8 +29,22 @@ const REPORT_TABS = [
     icon: <AlertTriangle size={18} />,
   },
 ];
+
 export const ActionBar = () => {
   const pathname = usePathname();
+
+  // Determine report type from pathname
+  const getReportType = ():
+    | "revenue"
+    | "consumption"
+    | "customers"
+    | "defaulters" => {
+    if (pathname?.includes("Revenue")) return "revenue";
+    if (pathname?.includes("Consumption")) return "consumption";
+    if (pathname?.includes("Customers")) return "customers";
+    if (pathname?.includes("Defaulters")) return "defaulters";
+    return "revenue"; // default
+  };
 
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
@@ -51,11 +65,8 @@ export const ActionBar = () => {
           <Filter size={18} />
           Filters
         </Button>
-        <Button variant="primary">
-          <Download size={18} />
-          Export
-        </Button>
+        <PDFExportButton reportType={getReportType()} variant="primary" />
       </div>
     </div>
   );
-}
+};

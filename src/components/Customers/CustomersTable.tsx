@@ -10,6 +10,7 @@ const columns = [
   {
     key: "customer_id",
     label: "Customer ID",
+    render: (id: string) => <span className="font-mono">{id}</span>,
   },
   {
     key: "name",
@@ -126,4 +127,4 @@ export const CustomersTable = ({ data }: { data: Customer[] }) => {
       <Table columns={columns} data={data} />
     </GlassCard>
   );
-}
+};

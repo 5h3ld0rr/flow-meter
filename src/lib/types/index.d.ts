@@ -3,10 +3,11 @@ declare global {
 
   interface User {
     id: number;
+    employee_id: string;
     email: string;
     password_hash: string;
     full_name: string;
-    role: "admin" | "operator";
+    role: "admin" | "staff" | "officer" | "cashier" | "manager";
     created_at: Date;
     updated_at: Date;
   }
