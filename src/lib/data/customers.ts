@@ -9,7 +9,8 @@ export async function getCustomers(search?: string): Promise<Customer[]> {
         c.email, 
         c.phone, 
         c.address, 
-        c.status, 
+        c.status,
+        c.type, 
         c.balance, 
         c.created_at, 
         c.updated_at,
@@ -20,7 +21,7 @@ export async function getCustomers(search?: string): Promise<Customer[]> {
         AND (@search IS NULL OR c.name LIKE '%' + @search + '%' 
              OR c.email LIKE '%' + @search + '%' 
              OR c.customer_id LIKE '%' + @search + '%')
-    GROUP BY c.id, c.customer_id, c.name, c.email, c.phone, c.address, c.status, c.balance, c.created_at, c.updated_at
+    GROUP BY c.id, c.customer_id, c.name, c.email, c.phone, c.address, c.status, c.type, c.balance, c.created_at, c.updated_at
     ORDER BY c.created_at DESC`,
     { search: search || null }
   );
@@ -33,7 +34,7 @@ export async function getCustomers(search?: string): Promise<Customer[]> {
 
 export async function getCustomerById(id: string): Promise<Customer | null> {
   const result = await query<Customer>(
-    `SELECT id, customer_id, name, email, phone, address, status, balance, created_at, updated_at
+    `SELECT id, customer_id, name, email, phone, address, status, type, balance, created_at, updated_at
      FROM Customers
      WHERE customer_id = @id`,
     { id }

@@ -15,6 +15,10 @@ export const customerDbSchema = z.object({
     ),
   address: z.string().min(5, "Invalid address").max(500, "Invalid address"),
   status: z.enum(["active", "inactive", "overdue"] as const, "Invalid status"),
+  type: z.enum(["household", "business", "government"] as const, {
+    required_error: "Customer type is required",
+    invalid_type_error: "Invalid customer type",
+  }),
   balance: z.number("Invalid balance"),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),
@@ -25,6 +29,7 @@ export const createCustomerSchema = customerDbSchema.pick({
   email: true,
   phone: true,
   address: true,
+  type: true,
 });
 
 export const updateCustomerSchema = createCustomerSchema.extend({

@@ -25,6 +25,7 @@ CREATE TABLE dbo.Customers (
     phone NVARCHAR(50) NOT NULL,
     address NVARCHAR(MAX) NOT NULL,
     status NVARCHAR(50) NOT NULL DEFAULT 'active' CONSTRAINT CHK_Customers_Status CHECK (status IN ('active', 'inactive', 'overdue')),
+    type NVARCHAR(50) NOT NULL DEFAULT 'household' CONSTRAINT CHK_Customers_Type CHECK (type IN ('household', 'business', 'government')),
     balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
     created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
@@ -35,6 +36,7 @@ GO
 CREATE UNIQUE INDEX IX_Customers_CustomerId ON dbo.Customers(customer_id);
 CREATE INDEX IX_Customers_Email ON dbo.Customers(email);
 CREATE INDEX IX_Customers_Status ON dbo.Customers(status);
+CREATE INDEX IX_Customers_Type ON dbo.Customers(type);
 GO
 
 CREATE TABLE dbo.Meters (

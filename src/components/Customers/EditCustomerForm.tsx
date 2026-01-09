@@ -64,6 +64,18 @@ export const EditCustomerForm = ({ customer }: { customer: Customer }) => {
             defaultValue={customer.customer_id}
             readOnly
           />
+          <Input
+            name="type"
+            label="Customer Type"
+            type="select"
+            options={[
+              { value: "household", label: "Household" },
+              { value: "business", label: "Business" },
+              { value: "government", label: "Government" },
+            ]}
+            defaultValue={customer.type}
+            required
+          />
         </div>
         <Input
           name="address"

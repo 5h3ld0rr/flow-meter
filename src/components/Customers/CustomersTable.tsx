@@ -3,7 +3,7 @@
 import { Badge, GlassCard, Table } from "@/components/ui";
 import { UTILITIES } from "@/constants";
 import { cn } from "@/lib/utils";
-import { Edit, Eye, Trash2 } from "lucide-react";
+import { Building2, Edit, Eye, Home, Landmark, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 const columns = [
@@ -19,6 +19,34 @@ const columns = [
   {
     key: "email",
     label: "Email",
+  },
+  {
+    key: "type",
+    label: "Type",
+    render: (type: string) => {
+      const config = {
+        household: { icon: Home, color: "info" as const, label: "Household" },
+        business: {
+          icon: Building2,
+          color: "purple" as const,
+          label: "Business",
+        },
+        government: {
+          icon: Landmark,
+          color: "orange" as const,
+          label: "Government",
+        },
+      };
+
+      const typeConfig = config[type as keyof typeof config] || config.household;
+      const Icon = typeConfig.icon;
+
+      return (
+        <Badge variant={typeConfig.color} className="p-1.5" title={typeConfig.label}>
+          <Icon size={14} />
+        </Badge>
+      );
+    },
   },
   {
     key: "phone",

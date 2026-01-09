@@ -15,6 +15,7 @@ export const createCustomer = async (
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     address: formData.get("address") as string,
+    type: formData.get("type") as string,
   };
 
   try {
@@ -32,13 +33,14 @@ export const createCustomer = async (
 
     // REFACTORED: Simple INSERT
     await query(
-      `INSERT INTO Customers (name, email, phone, address, status, balance)
-       VALUES (@name, @email, @phone, @address, 'active', 0.00)`,
+      `INSERT INTO Customers (name, email, phone, address, type, status, balance)
+       VALUES (@name, @email, @phone, @address, @type, 'active', 0.00)`,
       {
         name: data.name,
         email: data.email,
         phone: data.phone,
         address: data.address,
+        type: data.type,
       }
     );
 
@@ -60,6 +62,7 @@ export const updateCustomer = async (
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       address: formData.get("address") as string,
+      type: formData.get("type") as string,
     };
 
     const validationResult = updateCustomerSchema.safeParse(rawData);
@@ -71,7 +74,7 @@ export const updateCustomer = async (
       };
     }
 
-    const { customer_id, name, email, phone, address } = validationResult.data;
+    const { customer_id, name, email, phone, address, type } = validationResult.data;
 
     // REFACTORED: Simple UPDATE
     await query(
@@ -80,9 +83,10 @@ export const updateCustomer = async (
            email = @email, 
            phone = @phone, 
            address = @address,
+           type = @type,
            updated_at = GETUTCDATE()
        WHERE customer_id = @customer_id`,
-      { customer_id, name, email, phone, address }
+      { customer_id, name, email, phone, address, type }
     );
 
     return { success: true, message: "Customer updated successfully" };

@@ -19,6 +19,7 @@ declare global {
     phone: string;
     address: string;
     status: "active" | "inactive" | "overdue";
+    type: "household" | "business" | "government";
     balance: number;
     created_at: Date;
     updated_at: Date;

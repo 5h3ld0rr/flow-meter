@@ -35,22 +35,41 @@ export default function Page() {
     >
       <form className="space-y-4" action={action}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Full Name" placeholder="John Doe" required />
           <Input
+            name="name"
+            label="Full Name"
+            placeholder="John Doe"
+            required
+          />
+          <Input
+            name="email"
             label="Email"
             type="email"
             placeholder="john@email.com"
             required
           />
           <Input
+            name="phone"
             label="Phone"
             type="tel"
             placeholder="+94 77 567 8900"
             required
           />
           <Input label="Customer ID" placeholder="Auto-generated" disabled />
+          <Input
+            name="type"
+            label="Customer Type"
+            type="select"
+            options={[
+              { value: "household", label: "Household" },
+              { value: "business", label: "Business" },
+              { value: "government", label: "Government" },
+            ]}
+            required
+          />
         </div>
         <Input
+          name="address"
           label="Address"
           placeholder="123 Main Street, City, State"
           required
