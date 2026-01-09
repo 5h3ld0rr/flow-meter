@@ -1,10 +1,14 @@
 "use server";
 
-import { execute } from "@/lib/db";
+import { query } from "@/lib/db";
 import { CreateReadingInput, createReadingSchema } from "@/lib/schemas/reading";
 import { revalidatePath } from "next/cache";
 import { getMeterLastReading } from "@/lib/data/meters";
 
+/**
+ * Creates a new meter reading with parameterized SQL queries
+ * Protected against SQL injection via parameterized queries
+ */
 export const createReading = async (
   data: CreateReadingInput,
   userId: string
@@ -34,22 +38,45 @@ export const createReading = async (
     const validData = validationResult.data;
     const consumption = validData.reading_value - previousReading;
 
-    // Call stored procedure to insert reading
-    await execute("sp_CreateReading", {
-      meterId: validData.meter_id,
-      readingValue: validData.reading_value,
-      readingDate: validData.reading_date,
-      consumption,
-      notes: data.notes || null,
-      userId,
-    });
+    // Get internal meter ID
+    const meterResult = await query<{ id: number }>(
+      "SELECT id FROM Meters WHERE meter_id = @meterId",
+      { meterId: validData.meter_id }
+    );
 
-    // Update meter with last reading
-    await execute("sp_UpdateMeterLastReading", {
-      meterId: validData.meter_id,
-      readingValue: validData.reading_value,
-      readingDate: validData.reading_date,
-    });
+    if (!meterResult.recordset[0]) {
+      return { success: false, error: "Meter not found" };
+    }
+
+    const meterIntId = meterResult.recordset[0].id;
+
+    // REFACTORED: Simple INSERT with parameterized query
+    await query(
+      `INSERT INTO Readings (meter_id, reading_value, reading_date, consumption, status, notes, created_by)
+       VALUES (@meterId, @readingValue, @readingDate, @consumption, 'submitted', @notes, @userId)`,
+      {
+        meterId: meterIntId,
+        readingValue: validData.reading_value,
+        readingDate: validData.reading_date,
+        consumption,
+        notes: data.notes || null,
+        userId,
+      }
+    );
+
+    // REFACTORED: Simple UPDATE with parameterized query
+    await query(
+      `UPDATE Meters
+       SET last_reading_value = @readingValue,
+           last_reading_date = @readingDate,
+           updated_at = GETUTCDATE()
+       WHERE id = @meterId`,
+      {
+        meterId: meterIntId,
+        readingValue: validData.reading_value,
+        readingDate: validData.reading_date,
+      }
+    );
 
     revalidatePath("/UMS/Readings");
     revalidatePath("/UMS/Dashboard");
@@ -60,6 +87,10 @@ export const createReading = async (
   }
 };
 
+/**
+ * Validates a meter reading value
+ * Uses parameterized queries for data retrieval
+ */
 export const validateReading = async (
   meterId: string,
   value: number

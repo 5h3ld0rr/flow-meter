@@ -1,3 +1,6 @@
+-- =============================================
+-- Dashboard & Analytics Stored Procedures
+-- =============================================
 CREATE OR ALTER PROCEDURE sp_GetDashboardStats
 AS
 BEGIN
@@ -56,7 +59,7 @@ BEGIN
         MAX(m.utility_type) as utility_type
     FROM Customers c
     INNER JOIN Meters m ON c.id = m.customer_id
-    INNER JOIN Readings r ON m.id = r.meter_id -- fixed joins
+    INNER JOIN Readings r ON m.id = r.meter_id
     WHERE r.reading_date >= DATEADD(YEAR, -2, GETUTCDATE())
     GROUP BY c.id, c.name
     ORDER BY total_consumption DESC;
@@ -95,6 +98,35 @@ BEGIN
 END;
 GO
 
+-- =============================================
+-- Payment Statistics Stored Procedures
+-- =============================================
+CREATE OR ALTER PROCEDURE sp_GetPaymentStats
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        ISNULL(SUM(CASE WHEN CAST(payment_date AS DATE) = CAST(GETUTCDATE() AS DATE) THEN amount ELSE 0 END), 0) as today,
+        ISNULL(SUM(CASE WHEN CAST(payment_date AS DATE) = CAST(DATEADD(DAY, -1, GETUTCDATE()) AS DATE) THEN amount ELSE 0 END), 0) as yesterday
+    FROM Payments WHERE status = 'completed';
+    
+    SELECT ISNULL(SUM(amount), 0) as total
+    FROM Payments
+    WHERE status = 'completed'
+      AND MONTH(payment_date) = MONTH(GETUTCDATE())
+      AND YEAR(payment_date) = YEAR(GETUTCDATE());
+    
+    SELECT 
+        ISNULL(SUM(amount), 0) as amount,
+        COUNT(*) as count
+    FROM Payments WHERE status = 'pending';
+END;
+GO
+
+-- =============================================
+-- Extended Reporting Stored Procedures
+-- =============================================
 CREATE OR ALTER PROCEDURE sp_GetRevenueReport
     @startDate DATE = NULL,
     @endDate DATE = NULL
@@ -105,13 +137,71 @@ BEGIN
     SELECT 
         FORMAT(b.created_at, 'MMM yyyy') as month,
         SUM(b.total_amount) as revenue,
-        50 as target
+        SUM(b.total_amount) * 1.15 as target
     FROM Bills b
     WHERE b.status = 'paid'
       AND (@startDate IS NULL OR b.created_at >= @startDate)
       AND (@endDate IS NULL OR b.created_at <= @endDate)
-    GROUP BY FORMAT(b.created_at, 'MMM yyyy') 
-    ORDER BY month;
+    GROUP BY FORMAT(b.created_at, 'MMM yyyy'), YEAR(b.created_at), MONTH(b.created_at)
+    ORDER BY YEAR(b.created_at), MONTH(b.created_at);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE sp_GetConsumptionReport
+    @startDate DATE = NULL,
+    @endDate DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        FORMAT(reading_date, 'MMM yyyy') as month,
+        SUM(consumption) as consumption,
+        SUM(consumption) * 1.1 as target
+    FROM Readings
+    WHERE (@startDate IS NULL OR reading_date >= @startDate)
+      AND (@endDate IS NULL OR reading_date <= @endDate)
+    GROUP BY FORMAT(reading_date, 'MMM yyyy'), YEAR(reading_date), MONTH(reading_date)
+    ORDER BY YEAR(reading_date), MONTH(reading_date);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE sp_GetCustomerReport
+    @startDate DATE = NULL,
+    @endDate DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        FORMAT(created_at, 'MMM yyyy') as month,
+        COUNT(*) as customers,
+        COUNT(*) + 5 as target
+    FROM Customers
+    WHERE status != 'inactive'
+      AND (@startDate IS NULL OR created_at >= @startDate)
+      AND (@endDate IS NULL OR created_at <= @endDate)
+    GROUP BY FORMAT(created_at, 'MMM yyyy'), YEAR(created_at), MONTH(created_at)
+    ORDER BY YEAR(created_at), MONTH(created_at);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE sp_GetDefaultersReport
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        COALESCE(NULLIF(SUBSTRING(c.address, CHARINDEX(',', c.address) + 1, LEN(c.address)), ''), 'Other') as region,
+        COUNT(DISTINCT c.id) as defaulters,
+        SUM(b.total_amount) as outstanding,
+        COUNT(b.id) as bill_count
+    FROM Customers c
+    INNER JOIN Bills b ON c.id = b.customer_id
+    WHERE b.status IN ('overdue', 'generated', 'sent') 
+      AND b.due_date < GETUTCDATE()
+    GROUP BY SUBSTRING(c.address, CHARINDEX(',', c.address) + 1, LEN(c.address))
+    ORDER BY outstanding DESC;
 END;
 GO
 

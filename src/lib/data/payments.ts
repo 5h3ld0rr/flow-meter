@@ -1,6 +1,4 @@
-import { execute } from "@/lib/db";
-
-// Data Layer - READ operations for pages
+import { execute, query } from "@/lib/db";
 
 export async function getPayments(filters?: {
   customerId?: string;
@@ -8,18 +6,47 @@ export async function getPayments(filters?: {
   startDate?: Date;
   endDate?: Date;
 }) {
-  const result = await execute<
+  const result = await query<
     Payment & { customer_name: string; bill_id: string }
-  >("sp_GetPayments", filters);
+  >(
+    `SELECT 
+        p.*,
+        c.name as customer_name,
+        b.bill_id
+    FROM Payments p
+    INNER JOIN Customers c ON p.customer_id = c.id
+    INNER JOIN Bills b ON p.bill_id = b.id
+    WHERE (@customerId IS NULL OR c.customer_id = @customerId)
+      AND (@status IS NULL OR p.status = @status)
+      AND (@startDate IS NULL OR p.payment_date >= @startDate)
+      AND (@endDate IS NULL OR p.payment_date <= @endDate)
+    ORDER BY p.payment_date DESC`,
+    {
+      customerId: filters?.customerId || null,
+      status: filters?.status || null,
+      startDate: filters?.startDate || null,
+      endDate: filters?.endDate || null,
+    }
+  );
   return result.recordset;
 }
 
 export async function getPaymentById(
   id: number
 ): Promise<(Payment & { customer_name: string; bill_id: string }) | null> {
-  const result = await execute<
+  const result = await query<
     Payment & { customer_name: string; bill_id: string }
-  >("sp_GetPaymentById", { id });
+  >(
+    `SELECT 
+        p.*,
+        c.name as customer_name,
+        b.bill_id
+    FROM Payments p
+    INNER JOIN Customers c ON p.customer_id = c.id
+    LEFT JOIN Bills b ON p.bill_id = b.id
+    WHERE p.id = @id`,
+    { id }
+  );
   return result.recordset[0] || null;
 }
 
@@ -32,10 +59,9 @@ export async function getPaymentStats(): Promise<{
   pendingAmount: number;
   pendingCount: number;
 }> {
+  // RETAINED: Complex aggregation over multiple results
   const result = await execute<any>("sp_GetPaymentStats");
 
-  // Business logic: Calculate trends and percentages
-  // Business logic: Calculate trends and percentages
   const datasets = result.recordsets as any[][];
   const todayData = datasets[0][0];
   const monthlyData = datasets[1][0];
@@ -65,16 +91,23 @@ export async function getPaymentStats(): Promise<{
 }
 
 export async function getBillForPayment(billId: string) {
-  const result = await execute<{
+  const result = await query<{
     bill_id: string;
     customer_id: string;
     total_amount: number;
     status: string;
-  }>("sp_GetBillForPayment", { billId });
+  }>(
+    `SELECT bill_id, customer_id, total_amount, status
+     FROM Bills
+     WHERE bill_id = @billId`,
+    { billId }
+  );
   return result.recordset[0] || null;
 }
 
 export async function getPaymentCount(): Promise<number> {
-  const result = await execute<{ count: number }>("sp_GetPaymentCount");
+  const result = await query<{ count: number }>(
+    "SELECT COUNT(*) as count FROM Payments"
+  );
   return result.recordset[0].count;
 }

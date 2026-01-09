@@ -1,11 +1,15 @@
 USE FlowMeter;
 GO
 
-INSERT INTO dbo.Users (email, password_hash, full_name, role)
+INSERT INTO dbo.Users (employee_id, email, password_hash, full_name, role)
 VALUES 
-    ('admin@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'System Administrator', 'admin'),
-    ('operator@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'System Operator', 'operator');
+    ('EMP-000001', 'admin@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'System Administrator', 'admin'),
+    ('EMP-000002', 'staff@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'Administrative Staff', 'staff'),
+    ('EMP-000003', 'officer@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'Field Officer', 'officer'),
+    ('EMP-000004', 'cashier@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'Billing Clerk', 'cashier'),
+    ('EMP-000005', 'manager@flowmeter.com', '$2b$10$AsgraeAYHneLxPYwScNg1O3ut/K6ShiuVbTyvlNHe1DjGUUBz/p6G', 'General Manager', 'manager');
 GO
+
 
 INSERT INTO dbo.Tariffs (utility_type, rate_per_unit, tax_percentage, effective_from)
 VALUES 

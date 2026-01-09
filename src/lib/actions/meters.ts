@@ -1,10 +1,14 @@
 "use server";
 
-import { execute } from "@/lib/db";
+import { query } from "@/lib/db";
 import { createMeterSchema, updateMeterSchema } from "@/lib/schemas/meter";
 import { redirect } from "next/navigation";
 import { checkSerialNumberExists, getMeterCount } from "@/lib/data/meters";
 
+/**
+ * Creates a new meter with parameterized SQL query
+ * Protected against SQL injection via parameterized queries
+ */
 export const createMeter = async (prevState: unknown, formData: FormData) => {
   const rawData = {
     serial_number: formData.get("serial_number") as string,
@@ -37,15 +41,31 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     const meterCount = await getMeterCount();
     const meterId = `M${String(meterCount + 1).padStart(3, "0")}`;
 
-    // Call stored procedure directly - trigger handles activity logging
-    await execute("sp_CreateMeter", {
-      meterId,
-      serialNumber: data.serial_number,
-      customerId: data.customer_id,
-      utilityType: data.utility_type,
-      location: data.location,
-      installDate: data.install_date,
-    });
+    // Get internal customer ID from customer_id string
+    const customerResult = await query<{ id: number }>(
+      "SELECT id FROM Customers WHERE customer_id = @customerId",
+      { customerId: data.customer_id }
+    );
+
+    if (!customerResult.recordset[0]) {
+      return { success: false, error: "Customer not found" };
+    }
+
+    const custIntId = customerResult.recordset[0].id;
+
+    // REFACTORED: Simple INSERT with parameterized query
+    await query(
+      `INSERT INTO Meters (meter_id, serial_number, customer_id, utility_type, location, install_date, status)
+       VALUES (@meterId, @serialNumber, @customerId, @utilityType, @location, @installDate, 'active')`,
+      {
+        meterId,
+        serialNumber: data.serial_number,
+        customerId: custIntId,
+        utilityType: data.utility_type,
+        location: data.location,
+        installDate: data.install_date,
+      }
+    );
 
     redirect("/UMS/Meters");
   } catch (error) {
@@ -54,10 +74,15 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
   }
 };
 
+/**
+ * Updates an existing meter with parameterized SQL query
+ * Protected against SQL injection via parameterized queries
+ */
 export const updateMeter = async (prevState: unknown, formData: FormData) => {
   try {
+    const meterId = formData.get("meter_id") as string;
+
     const rawData = {
-      meter_id: formData.get("meter_id") as string,
       serial_number: formData.get("serial_number") as string,
       customer_id: formData.get("customer_id") as string,
       utility_type: formData.get("utility_type") as string,
@@ -75,8 +100,61 @@ export const updateMeter = async (prevState: unknown, formData: FormData) => {
       };
     }
 
-    // Call stored procedure directly
-    await execute("sp_UpdateMeter", validationResult.data);
+    const data = validationResult.data;
+
+    // Get internal customer ID from customer_id string if provided
+    let custIntId: number | undefined;
+    if (data.customer_id) {
+      const customerResult = await query<{ id: number }>(
+        "SELECT id FROM Customers WHERE customer_id = @customerId",
+        { customerId: data.customer_id }
+      );
+
+      if (!customerResult.recordset[0]) {
+        return { success: false, message: "Customer not found" };
+      }
+
+      custIntId = customerResult.recordset[0].id;
+    }
+
+    // REFACTORED: Simple UPDATE with parameterized query
+    // Build dynamic query based on provided fields
+    const updates: string[] = [];
+    const params: Record<string, string | number | Date> = {
+      meter_id: meterId,
+    };
+
+    if (data.serial_number !== undefined) {
+      updates.push("serial_number = @serial_number");
+      params.serial_number = data.serial_number;
+    }
+    if (custIntId !== undefined) {
+      updates.push("customer_id = @customerId");
+      params.customerId = custIntId;
+    }
+    if (data.utility_type !== undefined) {
+      updates.push("utility_type = @utility_type");
+      params.utility_type = data.utility_type;
+    }
+    if (data.location !== undefined) {
+      updates.push("location = @location");
+      params.location = data.location;
+    }
+    if (data.install_date !== undefined) {
+      updates.push("install_date = @install_date");
+      params.install_date = data.install_date;
+    }
+    if (data.status !== undefined) {
+      updates.push("status = @status");
+      params.status = data.status;
+    }
+
+    updates.push("updated_at = GETUTCDATE()");
+
+    await query(
+      `UPDATE Meters SET ${updates.join(", ")} WHERE meter_id = @meter_id`,
+      params
+    );
 
     return { success: true, message: "Meter updated successfully" };
   } catch (error) {
@@ -85,12 +163,22 @@ export const updateMeter = async (prevState: unknown, formData: FormData) => {
   }
 };
 
+/**
+ * Soft-deletes a meter with parameterized SQL query
+ * Protected against SQL injection via parameterized queries
+ */
 export const deleteMeter = async (
   id: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Call stored procedure directly
-    await execute("sp_DeleteMeter", { id });
+    // REFACTORED: Simple soft-delete UPDATE with parameterized query
+    await query(
+      `UPDATE Meters 
+       SET status = 'inactive', 
+           updated_at = GETUTCDATE() 
+       WHERE meter_id = @id`,
+      { id }
+    );
 
     return { success: true, message: "Meter deleted successfully" };
   } catch (error) {

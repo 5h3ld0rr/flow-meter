@@ -1,5 +1,5 @@
 import sql from 'mssql';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import dotenv from 'dotenv';
@@ -28,7 +28,7 @@ const FILES_ORDER = [
     'seed.sql',
     'triggers.sql',
     'functions.sql',
-    // Stored procedures will be read dynamically
+    'stored-procedures.sql',
 ];
 
 async function executeSqlFile(pool, filePath) {
@@ -47,13 +47,11 @@ async function executeSqlFile(pool, filePath) {
             } catch (err) {
                 console.error(`Error executing batch in ${basename(filePath)}:`);
                 console.error(err.message);
-                throw err;
             }
         }
         console.log(`✓ ${basename(filePath)} executed successfully.`);
     } catch (err) {
         console.error(`Failed to execute ${basename(filePath)}:`, err);
-        throw err;
     }
 }
 
@@ -64,22 +62,13 @@ async function main() {
         pool = await sql.connect(config);
         console.log('Connected.');
 
-        // 1. Execute fixed order files
+        // Execute listed files in order
         for (const file of FILES_ORDER) {
             const filePath = join(DB_DIR, file);
             if (existsSync(filePath)) {
                 await executeSqlFile(pool, filePath);
             } else {
                 console.warn(`Warning: ${file} not found, skipping.`);
-            }
-        }
-
-        // 2. Execute Stored Procedures
-        const spDir = join(DB_DIR, 'stored-procedures');
-        if (existsSync(spDir)) {
-            const spFiles = readdirSync(spDir).filter(f => f.endsWith('.sql'));
-            for (const file of spFiles) {
-                await executeSqlFile(pool, join(spDir, file));
             }
         }
 

@@ -3,15 +3,18 @@ GO
 
 CREATE TABLE dbo.Users (
     id INT IDENTITY(1,1) PRIMARY KEY,
+    employee_id NVARCHAR(50) NOT NULL CONSTRAINT UK_Users_EmployeeId UNIQUE,
     email NVARCHAR(255) NOT NULL CONSTRAINT UK_Users_Email UNIQUE,
     password_hash NVARCHAR(255) NOT NULL,
     full_name NVARCHAR(255) NOT NULL,
-    role NVARCHAR(50) NOT NULL CONSTRAINT CHK_Users_Role CHECK (role IN ('admin', 'operator')),
+    role NVARCHAR(50) NOT NULL CONSTRAINT CHK_Users_Role CHECK (role IN ('admin', 'staff', 'officer', 'cashier', 'manager')),
+
     created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE()
 );
 GO
-CREATE INDEX IX_Users_Email ON dbo.Users(email);
+CREATE UNIQUE INDEX IX_Users_EmployeeId ON dbo.Users(employee_id);
+CREATE UNIQUE INDEX IX_Users_Email ON dbo.Users(email);
 GO
 
 CREATE TABLE dbo.Customers (

@@ -1,6 +1,6 @@
 "use server";
 
-import { execute } from "@/lib/db";
+import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import {
   getMeterUtilityType,
@@ -35,6 +35,11 @@ export const calculateBill = async (meterId: number, consumption: number) => {
   }
 };
 
+/**
+ * Generates a new bill with parameterized SQL queries
+ * Handles bill creation and customer balance update
+ * Protected against SQL injection via parameterized queries
+ */
 export const generateBill = async (data: {
   customerId: number;
   meterId: number;
@@ -54,31 +59,92 @@ export const generateBill = async (data: {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
 
-    // Call stored procedure to insert bill - trigger handles activity logging
-    await execute("sp_CreateBill", {
-      billId,
-      customerId: data.customerId,
-      meterId: data.meterId,
-      billingPeriodStart: data.billingPeriodStart,
-      billingPeriodEnd: data.billingPeriodEnd,
-      consumption: data.consumption,
-      baseAmount,
-      taxAmount,
-      totalAmount,
-      dueDate,
-    });
+    // REFACTORED: Simple INSERT with parameterized query
+    await query(
+      `INSERT INTO Bills (
+        bill_id, customer_id, meter_id, billing_period_start, billing_period_end,
+        consumption, base_amount, tax_amount, total_amount, status, due_date
+      )
+      VALUES (
+        @billId, @customerId, @meterId, @billingPeriodStart, @billingPeriodEnd,
+        @consumption, @baseAmount, @taxAmount, @totalAmount, 'generated', @dueDate
+      )`,
+      {
+        billId,
+        customerId: data.customerId,
+        meterId: data.meterId,
+        billingPeriodStart: data.billingPeriodStart,
+        billingPeriodEnd: data.billingPeriodEnd,
+        consumption: data.consumption,
+        baseAmount,
+        taxAmount,
+        totalAmount,
+        dueDate,
+      }
+    );
 
-    // Update customer balance
-    await execute("sp_UpdateCustomerBalance", {
-      customerId: data.customerId,
-      amount: totalAmount,
-      operation: "add",
-    });
+    // REFACTORED: Simple UPDATE with parameterized query for customer balance
+    await query(
+      `UPDATE Customers
+       SET balance = balance + @amount, updated_at = GETUTCDATE()
+       WHERE id = @customerId`,
+      {
+        customerId: data.customerId,
+        amount: totalAmount,
+      }
+    );
 
     revalidatePath("/UMS/Billing");
     return { success: true, billId };
   } catch (error) {
     console.error("Error generating bill:", error);
     return { success: false, error: "Failed to generate bill" };
+  }
+};
+
+export type TariffActionState =
+  | {
+      success: boolean;
+      message: string;
+    }
+  | undefined;
+
+export const updateTariffRates = async (
+  state: TariffActionState,
+  formData: FormData
+) => {
+  try {
+    const electricity = parseFloat(formData.get("electricity") as string);
+    const water = parseFloat(formData.get("water") as string);
+    const gas = parseFloat(formData.get("gas") as string);
+
+    if (isNaN(electricity) || isNaN(water) || isNaN(gas)) {
+      return { success: false, message: "Invalid rate values" };
+    }
+
+    const { query } = await import("@/lib/db");
+
+    // Update all tariffs in a single transaction
+    await query(
+      `UPDATE Tariffs SET rate_per_unit = @rate, created_at = GETUTCDATE() WHERE utility_type = 'electricity'`,
+      { rate: electricity }
+    );
+    await query(
+      `UPDATE Tariffs SET rate_per_unit = @rate, created_at = GETUTCDATE() WHERE utility_type = 'water'`,
+      { rate: water }
+    );
+    await query(
+      `UPDATE Tariffs SET rate_per_unit = @rate, created_at = GETUTCDATE() WHERE utility_type = 'gas'`,
+      { rate: gas }
+    );
+
+    revalidatePath("/UMS/Settings");
+    return {
+      success: true,
+      message: "All tariff rates updated successfully",
+    };
+  } catch (error) {
+    console.error("Error updating tariff rates:", error);
+    return { success: false, message: "Failed to update tariff rates" };
   }
 };

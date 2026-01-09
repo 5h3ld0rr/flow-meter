@@ -4,7 +4,7 @@ import {
   createCustomerSchema,
   updateCustomerSchema,
 } from "@/lib/schemas/customer";
-import { execute } from "@/lib/db";
+import { query } from "@/lib/db";
 
 export const createCustomer = async (
   prevState: unknown,
@@ -30,13 +30,17 @@ export const createCustomer = async (
 
     const data = validationResult.data;
 
-    // Call stored procedure directly - trigger handles activity logging
-    await execute("sp_CreateCustomer", {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-    });
+    // REFACTORED: Simple INSERT
+    await query(
+      `INSERT INTO Customers (name, email, phone, address, status, balance)
+       VALUES (@name, @email, @phone, @address, 'active', 0.00)`,
+      {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+      }
+    );
 
     return { success: true, message: "Customer created successfully" };
   } catch (error) {
@@ -67,8 +71,19 @@ export const updateCustomer = async (
       };
     }
 
-    // Call stored procedure directly
-    await execute("sp_UpdateCustomer", validationResult.data);
+    const { customer_id, name, email, phone, address } = validationResult.data;
+
+    // REFACTORED: Simple UPDATE
+    await query(
+      `UPDATE Customers 
+       SET name = @name, 
+           email = @email, 
+           phone = @phone, 
+           address = @address,
+           updated_at = GETUTCDATE()
+       WHERE customer_id = @customer_id`,
+      { customer_id, name, email, phone, address }
+    );
 
     return { success: true, message: "Customer updated successfully" };
   } catch (error) {
@@ -81,8 +96,14 @@ export const deleteCustomer = async (
   id: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Call stored procedure directly
-    await execute("sp_DeleteCustomer", { id });
+    // REFACTORED: Simple soft-delete UPDATE
+    await query(
+      `UPDATE Customers 
+       SET status = 'inactive', 
+           updated_at = GETUTCDATE() 
+       WHERE customer_id = @id`,
+      { id }
+    );
 
     return { success: true, message: "Customer deleted successfully" };
   } catch (error) {

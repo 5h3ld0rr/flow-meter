@@ -1,9 +1,14 @@
 "use server";
 
-import { execute } from "@/lib/db";
+import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getBillForPayment, getPaymentCount } from "@/lib/data/payments";
 
+/**
+ * Records a payment with parameterized SQL queries
+ * Handles bill status update and customer balance adjustment
+ * Protected against SQL injection via parameterized queries
+ */
 export const recordPayment = async (
   data: RecordPaymentRequest,
   userId: number
@@ -28,34 +33,66 @@ export const recordPayment = async (
       return { success: false, error: "Bill is already paid" };
     }
 
+    // Get internal bill ID
+    const billResult = await query<{ id: number; customer_id: number }>(
+      "SELECT id, customer_id FROM Bills WHERE bill_id = @billId",
+      { billId: data.bill_id }
+    );
+
+    if (!billResult.recordset[0]) {
+      return { success: false, error: "Bill not found" };
+    }
+
+    const billIntId = billResult.recordset[0].id;
+    const customerIntId = billResult.recordset[0].customer_id;
+
     const paymentCount = await getPaymentCount();
     const paymentId = `PAY${String(paymentCount + 1).padStart(3, "0")}`;
 
-    // Call stored procedure to insert payment - trigger handles activity logging
-    await execute("sp_CreatePayment", {
-      paymentId,
-      billId: data.bill_id,
-      customerId: bill.customer_id,
-      amount: data.amount,
-      paymentMethod: data.payment_method,
-      transactionRef: data.transaction_reference || null,
-      paymentDate: data.payment_date,
-      notes: data.notes || null,
-      userId,
-    });
+    // REFACTORED: Simple INSERT with parameterized query
+    await query(
+      `INSERT INTO Payments (
+        payment_id, bill_id, customer_id, amount, payment_method,
+        transaction_reference, payment_date, status, notes, created_by
+      )
+      VALUES (
+        @paymentId, @billId, @customerId, @amount, @paymentMethod,
+        @transactionRef, @paymentDate, 'completed', @notes, @userId
+      )`,
+      {
+        paymentId,
+        billId: billIntId,
+        customerId: customerIntId,
+        amount: data.amount,
+        paymentMethod: data.payment_method,
+        transactionRef: data.transaction_reference || null,
+        paymentDate: data.payment_date,
+        notes: data.notes || null,
+        userId,
+      }
+    );
 
-    // Update bill status
-    await execute("sp_UpdateBillStatus", {
-      billId: data.bill_id,
-      status: "paid",
-    });
+    // REFACTORED: Simple UPDATE with parameterized query
+    await query(
+      `UPDATE Bills
+       SET status = @status, updated_at = GETUTCDATE()
+       WHERE id = @billId`,
+      {
+        billId: billIntId,
+        status: "paid",
+      }
+    );
 
-    // Update customer balance
-    await execute("sp_UpdateCustomerBalance", {
-      customerId: bill.customer_id,
-      amount: data.amount,
-      operation: "subtract",
-    });
+    // REFACTORED: Simple UPDATE with parameterized query for customer balance
+    await query(
+      `UPDATE Customers
+       SET balance = balance - @amount, updated_at = GETUTCDATE()
+       WHERE id = @customerId`,
+      {
+        customerId: customerIntId,
+        amount: data.amount,
+      }
+    );
 
     revalidatePath("/UMS/Payments");
     revalidatePath("/UMS/Dashboard");
