@@ -1,3 +1,12 @@
+"use client";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./Tooltip";
+
 interface BadgeProps {
   children: React.ReactNode;
   variant?:
@@ -10,12 +19,15 @@ interface BadgeProps {
     | "orange";
   size?: "sm" | "md";
   className?: string;
+  tooltip?: string;
 }
+
 export const Badge = ({
   children,
   variant = "default",
   size = "md",
   className = "",
+  tooltip,
 }: BadgeProps) => {
   const variantClasses = {
     success:
@@ -36,7 +48,8 @@ export const Badge = ({
     sm: "px-2 py-0.5 text-xs",
     md: "px-2.5 py-1 text-sm",
   };
-  return (
+
+  const badgeContent = (
     <span
       className={`
       inline-flex items-center font-medium rounded-full
@@ -48,4 +61,19 @@ export const Badge = ({
       {children}
     </span>
   );
+
+  if (tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return badgeContent;
 };

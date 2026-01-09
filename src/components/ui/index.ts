@@ -8,3 +8,4 @@ export * from "./Table";
 export * from "./DropdownMenu";
 export * from "./Toggle";
 export * from "./Sonner";
+export * from "./Tooltip";
