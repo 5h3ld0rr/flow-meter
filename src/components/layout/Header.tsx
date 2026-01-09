@@ -1,6 +1,15 @@
 "use client";
 
-import { Sun, Moon, Bell, User, LogOut, ArrowLeft } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Bell,
+  User,
+  LogOut,
+  ArrowLeft,
+  Copy,
+  Check,
+} from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { useTheme } from "next-themes";
 import {
@@ -12,22 +21,40 @@ import {
 import { Button } from "../ui/Button";
 import { logout } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
   showBackButton?: boolean;
+  copyText?: string;
 }
 
-export const Header = ({ title, subtitle, showBackButton }: HeaderProps) => {
+export const Header = ({
+  title,
+  subtitle,
+  showBackButton,
+  copyText,
+}: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const [copied, setCopied] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
       console.error("Logout failed", error);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (copyText) {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -47,13 +74,27 @@ export const Header = ({ title, subtitle, showBackButton }: HeaderProps) => {
               />
             </button>
           )}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-2xl font-bold truncate">{title}</h1>
-            {subtitle && (
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
-                {subtitle}
-              </p>
-            )}
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold truncate">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
+                  {subtitle}
+
+                  {copyText && (
+                    <button
+                      onClick={handleCopy}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-smooth text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Copy ID"
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  )}
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-2 md:space-x-3 shrink-0">
@@ -110,4 +151,4 @@ export const Header = ({ title, subtitle, showBackButton }: HeaderProps) => {
       </div>
     </GlassCard>
   );
-}
+};

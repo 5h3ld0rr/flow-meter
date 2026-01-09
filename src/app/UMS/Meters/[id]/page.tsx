@@ -47,6 +47,7 @@ export default async function Page({
         title={meter.serial_number}
         subtitle={`Meter ID: ${meter.meter_id}`}
         showBackButton
+        copyText={meter.meter_id}
       />
       {/* Meter Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
