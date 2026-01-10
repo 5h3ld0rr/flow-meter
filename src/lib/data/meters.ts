@@ -1,9 +1,12 @@
 import { query } from "@/lib/db";
 
 export async function getMeters(utilityType?: string, customerId?: string) {
-  const result = await query<Meter & { customer_name: string }>(
+  const result = await query<
+    Meter & { customer_display_id: string; customer_name: string }
+  >(
     `SELECT 
         m.*,
+        c.customer_id as customer_display_id,
         c.name as customer_name
     FROM Meters m
     INNER JOIN Customers c ON m.customer_id = c.id
@@ -17,10 +20,15 @@ export async function getMeters(utilityType?: string, customerId?: string) {
 
 export async function getMeterById(id: string) {
   const result = await query<
-    Meter & { customer_name: string; customer_email: string }
+    Meter & {
+      customer_display_id: string;
+      customer_name: string;
+      customer_email: string;
+    }
   >(
     `SELECT 
         m.*,
+        c.customer_id as customer_display_id,
         c.name as customer_name,
         c.email as customer_email
     FROM Meters m

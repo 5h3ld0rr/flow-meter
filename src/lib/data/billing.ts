@@ -80,3 +80,15 @@ export async function getAllTariffs() {
   const result = await query<Tariff>("SELECT * FROM Tariffs");
   return result.recordset;
 }
+
+export async function addTariffRate(utilityType: string, rate: number) {
+  // Check if current rate is different to avoid spamming
+  const currentRate = await getTariffRate(utilityType);
+  if (currentRate === rate) return; // No change needed
+
+  await query(
+    `INSERT INTO Tariffs (utility_type, rate_per_unit, effective_from)
+     VALUES (@utilityType, @rate, GETDATE())`,
+    { utilityType, rate }
+  );
+}

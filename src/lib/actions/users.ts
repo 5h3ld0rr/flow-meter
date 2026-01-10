@@ -95,6 +95,7 @@ export const updateUser = async (
   data: {
     email: string;
     full_name: string;
+    employee_id: string;
     role: "admin" | "staff" | "officer" | "cashier" | "manager";
     password?: string;
   },
@@ -145,6 +146,7 @@ export const updateUser = async (
     const setClauses = [
       "email = @email",
       "full_name = @full_name",
+      "employee_id = @employee_id",
       "role = @role",
       "updated_at = GETUTCDATE()",
     ];
@@ -153,6 +155,7 @@ export const updateUser = async (
       userId,
       email: data.email,
       full_name: data.full_name,
+      employee_id: data.employee_id,
       role: data.role,
     };
 
@@ -189,9 +192,10 @@ export const updateUserAction = async (
     | "officer"
     | "cashier"
     | "manager";
+  const employee_id = formData.get("employee_id") as string;
   const password = formData.get("password") as string;
 
-  if (!userId || !email || !full_name || !role) {
+  if (!userId || !email || !full_name || !role || !employee_id) {
     return {
       success: false,
       message: "All fields except password are required",
@@ -201,6 +205,7 @@ export const updateUserAction = async (
   const data = {
     email,
     full_name,
+    employee_id,
     role,
     password: password || undefined,
   };

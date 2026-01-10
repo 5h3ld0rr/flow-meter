@@ -11,6 +11,7 @@ import {
   Settings,
   Users,
   X,
+  History,
 } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { Logo } from "../ui/Logo";
@@ -68,6 +69,12 @@ const NAV_ITEMS = [
     roles: ["admin"],
   },
   {
+    path: "/UMS/ActivityLog",
+    label: "Activity Log",
+    icon: History,
+    roles: ["admin", "staff"],
+  },
+  {
     path: "/UMS/Settings",
     label: "Settings",
     icon: Settings,
@@ -85,7 +92,7 @@ export const Sidebar = ({ role = "staff" }: SidebarProps) => {
   const pathname = usePathname();
 
   const filteredNavItems = NAV_ITEMS.filter((item) =>
-    item.roles.includes(role as any)
+    item.roles.includes(role)
   );
 
   return (
@@ -121,6 +128,7 @@ export const Sidebar = ({ role = "staff" }: SidebarProps) => {
           <nav className="flex-1 pt-8 px-4 overflow-y-auto scrollbar-thin">
             {filteredNavItems.map((item) => {
               const isActive = pathname.includes(item.path);
+              const Icon = item.icon;
               return (
                 <Button
                   key={item.path}
@@ -130,7 +138,7 @@ export const Sidebar = ({ role = "staff" }: SidebarProps) => {
                   }}
                   variant={isActive ? "primary" : "ghost"}
                   fullWidth
-                  icon={<item.icon size={20} className="mr-1" />}
+                  icon={<Icon size={20} className="mr-1" />}
                   align="start"
                   className="px-4 py-3 font-medium"
                 >

@@ -1,5 +1,4 @@
 import { SignJWT, jwtVerify } from "jose";
-import { SessionPayload } from "./types";
 
 const secretKey = process.env.SESSION_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
@@ -18,7 +17,7 @@ export const decrypt = async (session: string | undefined = "") => {
       algorithms: ["HS256"],
     });
     return payload as SessionPayload;
-  } catch (error: unknown) {
+  } catch {
     return null;
   }
 };

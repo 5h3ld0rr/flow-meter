@@ -1,3 +1,5 @@
+import { JWTPayload } from "jose";
+
 declare global {
   type utilityType = "electricity" | "water" | "gas";
 
@@ -151,6 +153,12 @@ declare global {
     name: string;
     value: number;
     color: string;
+  }
+
+  interface SessionPayload extends JWTPayload {
+    userId: string;
+    role: string;
+    userName: string;
   }
 }
 

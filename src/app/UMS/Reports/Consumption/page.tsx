@@ -3,9 +3,17 @@ import { BarChart, AreaChart } from "@/components/charts";
 import { getConsumptionReport, getRegionalReport } from "@/lib/data/reports";
 import { AIAnalysisPanel } from "@/components/Reports";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ startDate?: string; endDate?: string }>;
+}) {
+  const params = await searchParams;
+  const startDate = params.startDate ? new Date(params.startDate) : undefined;
+  const endDate = params.endDate ? new Date(params.endDate) : undefined;
+
   const [consumptionData, regionalData] = await Promise.all([
-    getConsumptionReport(),
+    getConsumptionReport(startDate, endDate),
     getRegionalReport(),
   ]);
 

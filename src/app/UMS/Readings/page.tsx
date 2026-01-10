@@ -4,7 +4,12 @@ import { getReadings } from "@/lib/data/readings";
 import { ReadingForm } from "@/components/Readings/ReadingForm";
 import { UTILITIES } from "@/constants";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ meterId?: string }>;
+}) {
+  const params = await searchParams;
   const readings = await getReadings(undefined, 5);
 
   return (
@@ -16,7 +21,7 @@ export default async function Page() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Reading Entry Form */}
-        <ReadingForm />
+        <ReadingForm initialMeterId={params.meterId} />
 
         {/* Reading History */}
         <GlassCard className="p-6">

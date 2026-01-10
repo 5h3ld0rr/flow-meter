@@ -58,7 +58,7 @@ export default async function Page() {
         />
         <StatCard
           title="Monthly Revenue"
-          value={`$${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
+          value={`Rs. ${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{
             value: stats.monthlyRevenueTrend,
@@ -68,7 +68,7 @@ export default async function Page() {
         />
         <StatCard
           title="Outstanding"
-          value={`$${(stats.outstandingAmount / 1000).toFixed(1)}K`}
+          value={`Rs. ${(stats.outstandingAmount / 1000).toFixed(1)}K`}
           icon={<AlertCircle size={24} />}
           trend={{
             value: stats.outstandingTrend,

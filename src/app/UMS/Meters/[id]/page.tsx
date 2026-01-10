@@ -4,7 +4,7 @@ import { getMeterById } from "@/lib/data/meters";
 import { getReadings } from "@/lib/data/readings";
 import { getBills } from "@/lib/data/billing";
 import { notFound } from "next/navigation";
-import { MapPin, Calendar, Activity } from "lucide-react";
+import { MapPin, Calendar, Activity, Plus } from "lucide-react";
 import { UTILITIES } from "@/constants";
 import { cn } from "@/lib/utils";
 
@@ -136,9 +136,9 @@ export default async function Page({
                 </p>
               </div>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                href={`/UMS/Customers/${meter.customer_id}`}
+                href={`/UMS/Customers/${meter.customer_display_id}`}
               >
                 View Customer
               </Button>
@@ -208,7 +208,12 @@ export default async function Page({
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Reading History
           </h2>
-          <Button variant="primary" size="sm" href="/UMS/Readings/New">
+          <Button
+            variant="primary"
+            size="sm"
+            href={`/UMS/Readings?meterId=${meter.meter_id}`}
+            icon={<Plus size={18} />}
+          >
             Add Reading
           </Button>
         </div>

@@ -2,8 +2,12 @@ import "server-only";
 import { cookies } from "next/headers";
 import { encrypt } from "./jwt";
 
-export const createSession = async (userId: string, role: string) => {
-  const session = await encrypt({ userId, role });
+export const createSession = async (
+  userId: string,
+  role: string,
+  userName: string
+) => {
+  const session = await encrypt({ userId, role, userName });
 
   (await cookies()).set("session", session, {
     httpOnly: true,

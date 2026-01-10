@@ -27,12 +27,12 @@ export const login = async (state: unknown, formData: FormData) => {
 
     const user = result.recordset[0];
 
-    const isValidPassword = await verifyPassword(password, user.password_hash);
+    const isValidPassword = verifyPassword(password, user.password_hash);
     if (!isValidPassword) {
       return { success: false, message: "Invalid email or password" };
     }
 
-    await createSession(user.id.toString(), user.role);
+    await createSession(user.id.toString(), user.role, user.full_name);
   } catch (error) {
     console.log("Login error:", error);
     return { success: false, message: "Something went wrong" };

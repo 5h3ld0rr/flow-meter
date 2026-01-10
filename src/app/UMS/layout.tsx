@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/layout";
-import { getCurrentUser } from "@/lib/session/user";
+import { verifySession } from "@/lib/session/user";
 
 export default async function Layout({
   children,
@@ -8,7 +8,7 @@ export default async function Layout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
+  const user = await verifySession();
 
   return (
     <>

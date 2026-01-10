@@ -1,6 +1,6 @@
 import { getUserById } from "@/lib/data/users";
-import { getCurrentUser } from "@/lib/session/user";
-import { notFound, redirect } from "next/navigation";
+import { verifySession } from "@/lib/session/user";
+import { notFound } from "next/navigation";
 import { EditUserForm } from "@/components/Users/EditUserForm";
 
 export default async function Page({
@@ -9,18 +9,14 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [user, currentUser] = await Promise.all([
-    getUserById(id),
-    getCurrentUser(),
-  ]);
+  const [user] = await Promise.all([getUserById(id)]);
+  const currentUser = await verifySession();
 
   if (!user || !currentUser) {
     notFound();
   }
 
-  if (currentUser.id == Number(id)) {
-    redirect("/UMS/Users");
-  }
-
-  return <EditUserForm user={user} />;
+  return (
+    <EditUserForm user={user} currentUserId={Number(currentUser.userId)} />
+  );
 }

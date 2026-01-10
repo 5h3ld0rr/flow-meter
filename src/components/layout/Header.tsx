@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Sun,
-  Moon,
-  Bell,
-  User,
-  LogOut,
-  ArrowLeft,
-  Copy,
-  Check,
-} from "lucide-react";
+import { Sun, Moon, User, LogOut, ArrowLeft, Copy, Check } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { useTheme } from "next-themes";
 import {
@@ -24,18 +15,20 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-interface HeaderProps {
+export type HeaderProps = {
   title: string;
   subtitle?: string;
   showBackButton?: boolean;
   copyText?: string;
-}
+  userName?: string;
+};
 
-export const Header = ({
+export const HeaderClient = ({
   title,
   subtitle,
   showBackButton,
   copyText,
+  userName,
 }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -116,14 +109,6 @@ export const Header = ({
               />
             )}
           </button>
-          {/* Notifications */}
-          <button className="p-2 rounded-lg glass hover:bg-gray-100 dark:hover:bg-gray-100/5 transition-smooth relative">
-            <Bell
-              size={18}
-              className="md:w-5 md:h-5 text-gray-700 dark:text-slate-300"
-            />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full animate-pulse" />
-          </button>
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none flex items-center space-x-2 p-2 rounded-lg glass hover:bg-gray-100 dark:hover:bg-gray-100/5 transition-smooth">
@@ -131,7 +116,7 @@ export const Header = ({
                 <User size={14} className="md:w-4 md:h-4 text-white" />
               </div>
               <span className="text-sm font-medium text-gray-700 dark:text-slate-300 hidden sm:block">
-                Admin
+                {userName}
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="glass p-0">

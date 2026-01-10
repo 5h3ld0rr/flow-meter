@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { PDFExportButton } from "./PDFExportButton";
 import {
   DollarSign,
@@ -8,8 +8,15 @@ import {
   Users,
   AlertTriangle,
   Filter,
+  X,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/Popover";
+import { useState } from "react";
 
 const REPORT_TABS = [
   {
@@ -32,6 +39,14 @@ const REPORT_TABS = [
 
 export const ActionBar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [startDate, setStartDate] = useState(
+    searchParams.get("startDate") || ""
+  );
+  const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
+  const [open, setOpen] = useState(false);
 
   // Determine report type from pathname
   const getReportType = ():
@@ -46,13 +61,37 @@ export const ActionBar = () => {
     return "revenue"; // default
   };
 
+  const handleApplyFilter = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (startDate) params.set("startDate", startDate);
+    else params.delete("startDate");
+
+    if (endDate) params.set("endDate", endDate);
+    else params.delete("endDate");
+
+    router.push(`${pathname}?${params.toString()}`);
+    setOpen(false);
+  };
+
+  const handleClearFilter = () => {
+    setStartDate("");
+    setEndDate("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("startDate");
+    params.delete("endDate");
+    router.push(`${pathname}?${params.toString()}`);
+    setOpen(false);
+  };
+
+  const activeFiltersCount = [startDate, endDate].filter(Boolean).length;
+
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
       <div className="flex space-x-2 glass rounded-xl px-1">
         {REPORT_TABS.map((tab) => (
           <Button
             key={tab.label}
-            href={tab.label}
+            href={`${tab.label}?${searchParams.toString()}`} // Preserve filters when switching tabs
             variant={pathname?.includes(tab.label) ? "primary" : "ghost"}
             icon={tab.icon}
           >
@@ -61,10 +100,47 @@ export const ActionBar = () => {
         ))}
       </div>
       <div className="flex gap-2">
-        <Button variant="secondary">
-          <Filter size={18} />
-          Filters
-        </Button>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant={activeFiltersCount > 0 ? "primary" : "secondary"}>
+              <Filter size={18} />
+              Filters
+              {activeFiltersCount > 0 && (
+                <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80">
+            <div className="space-y-4">
+              <h4 className="font-medium leading-none">Filter Report</h4>
+              <div className="space-y-2">
+                <Input
+                  label="Start Date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <Input
+                  label="End Date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-between pt-2">
+                <Button variant="ghost" size="sm" onClick={handleClearFilter}>
+                  Clear
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleApplyFilter}>
+                  Apply
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <PDFExportButton reportType={getReportType()} variant="primary" />
       </div>
     </div>

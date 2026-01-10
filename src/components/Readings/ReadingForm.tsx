@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button, GlassCard, Input } from "@/components/ui";
 import { Camera, Save } from "lucide-react";
 import { verifyMeterIdAction } from "@/lib/actions/meters";
@@ -8,8 +8,12 @@ import { createReading } from "@/lib/actions/readings";
 import { toast } from "sonner";
 import { UTILITIES } from "@/constants";
 
-export const ReadingForm = () => {
-  const [meterId, setMeterId] = useState("");
+interface ReadingFormProps {
+  initialMeterId?: string;
+}
+
+export const ReadingForm = ({ initialMeterId }: ReadingFormProps) => {
+  const [meterId, setMeterId] = useState(initialMeterId || "");
   const [currentReading, setCurrentReading] = useState("");
   const [meterDetails, setMeterDetails] = useState<{
     customerName?: string;
@@ -20,24 +24,50 @@ export const ReadingForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const validateMeter = useCallback(
+    async (id: string) => {
+      if (!id) return;
+
+      setIsLoading(true);
+      const result = await verifyMeterIdAction(id);
+      setIsLoading(false);
+
+      if (result.success && result.data) {
+        setMeterDetails({
+          customerName: result.data.customer_name,
+          location: result.data.location,
+          utilityType: result.data.utility_type,
+          previousReading: result.data.last_reading_value,
+        });
+        if (!initialMeterId) {
+          // Only toast if manual entry, otherwise it might be annoying on page load,
+          // but actually it's good confirmation. Let's keep it or maybe dampen it.
+          // Keeping it for now as user feedback is good.
+          toast.success("Meter found: " + result.data.customer_name);
+        }
+      } else {
+        setMeterDetails(null);
+        if (initialMeterId)
+          toast.error(result.error || "Invalid Meter ID from URL");
+        else toast.error(result.error || "Invalid Meter ID");
+      }
+    },
+    [initialMeterId]
+  );
+
+  useEffect(() => {
+    if (initialMeterId) {
+      validateMeter(initialMeterId);
+    }
+  }, [initialMeterId, validateMeter]);
+
   const handleMeterIdBlur = async () => {
-    if (!meterId) return;
-
-    setIsLoading(true);
-    const result = await verifyMeterIdAction(meterId);
-    setIsLoading(false);
-
-    if (result.success && result.data) {
-      setMeterDetails({
-        customerName: result.data.customer_name,
-        location: result.data.location,
-        utilityType: result.data.utility_type,
-        previousReading: result.data.last_reading_value,
-      });
-      toast.success("Meter validated successfully");
-    } else {
-      setMeterDetails(null);
-      toast.error(result.error || "Invalid Meter ID");
+    if (meterId && meterId !== initialMeterId) {
+      // Avoid re-validating if unchanged from initial
+      // actually we should validate current value
+      await validateMeter(meterId);
+    } else if (meterId && !meterDetails) {
+      await validateMeter(meterId);
     }
   };
 

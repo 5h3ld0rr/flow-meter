@@ -1,13 +1,21 @@
 import { Badge, Button, GlassCard, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { FileText, Calculator, Send, ArrowLeft, Verified } from "lucide-react";
-import { getBills } from "@/lib/data/billing";
+import { FileText, Calculator, Send, ArrowLeft } from "lucide-react";
+import { getBills, getTariffRate } from "@/lib/data/billing";
+import { getMeterById, getMeterLastReading } from "@/lib/data/meters";
 import { Header } from "@/components/layout";
+import { BillingStepOne } from "@/components/Billing/BillingStepOne";
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ step?: string }>;
+  searchParams: Promise<{
+    step?: string;
+    customerId?: string;
+    meterId?: string;
+    currentReading?: string;
+    billingDate?: string;
+  }>;
 }) {
   const params = await searchParams;
   const step = params.step || "1";
@@ -15,17 +23,45 @@ export default async function Page({
   const bills = await getBills();
 
   const billingSummary = {
-    customerId: "C001",
-    customerName: "John Smith",
-    meterId: "ELC-2024-001",
-    previousReading: 1000,
-    currentReading: 1245,
-    consumption: 245,
-    tariffRate: 0.15,
-    amount: 36.75,
-    tax: 3.68,
-    total: 40.43,
+    customerId: params.customerId || "",
+    customerName: "",
+    meterId: params.meterId || "",
+    previousReading: 0,
+    currentReading: parseFloat(params.currentReading || "0"),
+    consumption: 0,
+    tariffRate: 0,
+    amount: 0,
+    tax: 0,
+    total: 0,
+    meterFound: false,
+    error: "",
   };
+
+  if (stepNumber > 1 && params.meterId) {
+    const meter = await getMeterById(params.meterId);
+    if (meter) {
+      billingSummary.meterFound = true;
+      billingSummary.customerName = meter.customer_name;
+      billingSummary.customerId = meter.customer_display_id;
+      const lastReading = await getMeterLastReading(params.meterId);
+      billingSummary.previousReading = lastReading?.last_reading_value || 0;
+
+      billingSummary.tariffRate = await getTariffRate(meter.utility_type);
+
+      if (stepNumber > 2) {
+        billingSummary.consumption =
+          billingSummary.currentReading - billingSummary.previousReading;
+        if (billingSummary.consumption < 0) billingSummary.consumption = 0;
+
+        billingSummary.amount =
+          billingSummary.consumption * billingSummary.tariffRate;
+        billingSummary.tax = billingSummary.amount * 0.1;
+        billingSummary.total = billingSummary.amount + billingSummary.tax;
+      }
+    } else {
+      billingSummary.error = "Meter not found";
+    }
+  }
   const STEPS = ["Select Customer", "Calculate", "Generate"];
 
   return (
@@ -82,73 +118,89 @@ export default async function Page({
           </h2>
 
           {stepNumber === 1 && (
-            <div className="space-y-4">
-              <Input label="Customer ID" placeholder="Enter customer ID" />
-              <Input label="Meter ID" placeholder="Select meter" />
-              <Input label="Billing Period" type="date" />
-              <div className="absolute bottom-0 left-0 p-6 w-full">
-                <Button
-                  variant="primary"
-                  href="/UMS/Billing?step=2"
-                  fullWidth
-                  icon={<Verified size={18} />}
-                >
-                  Validate Customer
-                </Button>
-              </div>
-            </div>
+            <BillingStepOne
+              initialCustomerId={billingSummary.customerId}
+              initialMeterId={billingSummary.meterId}
+              initialBillingDate={params.billingDate}
+            />
           )}
 
           {stepNumber === 2 && (
-            <div className="space-y-4">
-              <Input
-                label="Previous Reading"
-                type="number"
-                defaultValue="1000"
-                disabled
+            <form action="/UMS/Billing" method="GET">
+              <input type="hidden" name="step" value="3" />
+              <input
+                type="hidden"
+                name="customerId"
+                value={billingSummary.customerId}
               />
-              <Input
-                label="Current Reading"
-                type="number"
-                defaultValue="1245"
+              <input
+                type="hidden"
+                name="meterId"
+                value={billingSummary.meterId}
               />
-              <div className="glass rounded-lg p-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Consumption
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    245 kWh
-                  </span>
+
+              <div className="space-y-4">
+                {billingSummary.error && (
+                  <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
+                    {billingSummary.error}
+                  </div>
+                )}
+
+                <div className="glass p-3 rounded-lg mb-2">
+                  <p className="text-sm text-gray-500">
+                    Customer:{" "}
+                    <span className="font-medium text-gray-900 dark:text-gray-200">
+                      {billingSummary.customerName || "Unknown"}
+                    </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Tariff Rate
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    $0.15/kWh
-                  </span>
+
+                <Input
+                  label="Previous Reading"
+                  type="number"
+                  value={billingSummary.previousReading}
+                  readOnly
+                  disabled
+                />
+                <Input
+                  name="currentReading"
+                  label="Current Reading"
+                  type="number"
+                  placeholder="Enter current reading"
+                  min={billingSummary.previousReading}
+                  required
+                />
+                <div className="glass rounded-lg p-4">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Tariff Rate
+                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      Rs. {billingSummary.tariffRate}/unit
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
+                  <Button
+                    variant="secondary"
+                    href={`/UMS/Billing?step=1&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}`}
+                    fullWidth
+                    icon={<ArrowLeft size={18} />}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    icon={<Calculator size={18} />}
+                    disabled={!!billingSummary.error}
+                  >
+                    Calculate
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
-                <Button
-                  variant="secondary"
-                  href="/UMS/Billing?step=1"
-                  fullWidth
-                  icon={<ArrowLeft size={18} />}
-                >
-                  Back
-                </Button>
-                <Button
-                  variant="primary"
-                  href="/UMS/Billing?step=3"
-                  fullWidth
-                  icon={<Calculator size={18} />}
-                >
-                  Calculate
-                </Button>
-              </div>
-            </div>
+            </form>
           )}
 
           {stepNumber === 3 && (
@@ -156,10 +208,18 @@ export default async function Page({
               <div className="glass rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Consumption
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {billingSummary.consumption.toFixed(2)} units
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     Base Amount
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    $36.75
+                    Rs. {billingSummary.amount.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -167,7 +227,7 @@ export default async function Page({
                     Tax (10%)
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    $3.68
+                    Rs. {billingSummary.tax.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -175,14 +235,14 @@ export default async function Page({
                     Total Amount
                   </span>
                   <span className="text-xl font-bold text-blue-600 dark:text-cyan-400">
-                    $40.43
+                    Rs. {billingSummary.total.toFixed(2)}
                   </span>
                 </div>
               </div>
               <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
                 <Button
                   variant="secondary"
-                  href="/UMS/Billing?step=2"
+                  href={`/UMS/Billing?step=2&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}`}
                   fullWidth
                 >
                   <ArrowLeft size={18} />
@@ -217,7 +277,7 @@ export default async function Page({
                     Customer ID:
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {billingSummary.customerId}
+                    {billingSummary.customerId || "-"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -225,7 +285,7 @@ export default async function Page({
                     Name:
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {billingSummary.customerName}
+                    {billingSummary.customerName || "-"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -233,7 +293,7 @@ export default async function Page({
                     Meter ID:
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {billingSummary.meterId}
+                    {billingSummary.meterId || "-"}
                   </span>
                 </div>
               </div>
@@ -249,7 +309,7 @@ export default async function Page({
                     Previous Reading:
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {billingSummary.previousReading} kWh
+                    {billingSummary.previousReading} units
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -257,7 +317,7 @@ export default async function Page({
                     Current Reading:
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {billingSummary.currentReading} kWh
+                    {billingSummary.currentReading || "-"} units
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -265,7 +325,7 @@ export default async function Page({
                     Total Consumption:
                   </span>
                   <span className="font-bold text-blue-600 dark:text-cyan-400">
-                    {billingSummary.consumption} kWh
+                    {billingSummary.consumption.toFixed(2)} units
                   </span>
                 </div>
               </div>
@@ -324,7 +384,7 @@ export default async function Page({
                     {new Date(bill.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${bill.total_amount}
+                    Rs. {bill.total_amount}
                   </td>
                   <td className="px-4 py-3">
                     <Badge

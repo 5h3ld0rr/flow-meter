@@ -6,9 +6,16 @@ import { useActionState, useEffect, useRef } from "react";
 import { updateUserAction } from "@/lib/actions/users";
 import { toast } from "sonner";
 
-export const EditUserForm = ({ user }: { user: User }) => {
+export const EditUserForm = ({
+  user,
+  currentUserId,
+}: {
+  user: User;
+  currentUserId: number;
+}) => {
   const router = useRouter();
   const modalRef = useRef<ModalRef>(null);
+  const isSelf = user.id === currentUserId;
 
   const [state, action, isPending] = useActionState(
     updateUserAction,
@@ -66,7 +73,8 @@ export const EditUserForm = ({ user }: { user: User }) => {
             label="Role"
             defaultValue={user.role}
             type="select"
-            required
+            required={!isSelf}
+            disabled={isSelf}
             options={[
               { value: "admin", label: "Admin" },
               { value: "staff", label: "Staff" },
