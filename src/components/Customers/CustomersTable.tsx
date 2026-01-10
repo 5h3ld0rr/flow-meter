@@ -1,6 +1,14 @@
 "use client";
 
-import { Badge, GlassCard, Table } from "@/components/ui";
+import {
+  Badge,
+  GlassCard,
+  Table,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui";
 import { UTILITIES } from "@/constants";
 import { cn } from "@/lib/utils";
 import { Building2, Edit, Eye, Home, Landmark, Trash2 } from "lucide-react";
@@ -38,11 +46,16 @@ const columns = [
         },
       };
 
-      const typeConfig = config[type as keyof typeof config] || config.household;
+      const typeConfig =
+        config[type as keyof typeof config] || config.household;
       const Icon = typeConfig.icon;
 
       return (
-        <Badge variant={typeConfig.color} className="p-1.5" title={typeConfig.label}>
+        <Badge
+          variant={typeConfig.color}
+          className="p-1.5"
+          tooltip={typeConfig.label}
+        >
           <Icon size={14} />
         </Badge>
       );
@@ -73,18 +86,26 @@ const columns = [
           {utilities.map((utility) => {
             const utilityConfig = UTILITIES[utility];
             return (
-              <div
-                key={utility}
-                className={cn(
-                  "p-2 rounded-lg",
-                  utilityConfig.backgroundClassName
-                )}
-              >
-                <utilityConfig.icon
-                  size={16}
-                  className={utilityConfig.textClassName}
-                />
-              </div>
+              <TooltipProvider key={utility}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={cn(
+                        "p-2 rounded-lg",
+                        utilityConfig.backgroundClassName
+                      )}
+                    >
+                      <utilityConfig.icon
+                        size={16}
+                        className={utilityConfig.textClassName}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{utilityConfig.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             );
           })}
         </div>
@@ -112,11 +133,8 @@ const columns = [
     key: "status",
     label: "Status",
     render: (status: string) => {
-      return (
-        <Badge variant={status === "active" ? "success" : "danger"}>
-          {status}
-        </Badge>
-      );
+      const isActive = status === "active";
+      return <Badge variant={isActive ? "success" : "danger"}>{status}</Badge>;
     },
   },
   {
