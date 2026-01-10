@@ -1,13 +1,11 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart } from "@/components/charts";
-import { getDefaultersReport, getRegionalReport } from "@/lib/data/reports";
+import { getDefaultersReport } from "@/lib/data/reports";
 import { AIAnalysisPanel } from "@/components/Reports";
 
 export default async function Page() {
-  const [defaulterData, regionalData] = await Promise.all([
-    getDefaultersReport(),
-    getRegionalReport(),
-  ]);
+  const defaulterData = await getDefaultersReport();
+  const topDefaulters = defaulterData.slice(0, 10);
 
   return (
     <>
@@ -15,17 +13,17 @@ export default async function Page() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Outstanding Amount by Region ($)
+            Top Defaulters (Outstanding Amount)
           </h3>
           <div className="h-64">
             <BarChart
-              data={defaulterData}
-              xAxisKey="region"
+              data={topDefaulters}
+              xAxisKey="name"
               dataKeys={[
                 {
                   key: "outstanding",
                   color: "#EF4444",
-                  name: "Total Outstanding ($)",
+                  name: "Amount ($)",
                 },
               ]}
             />
@@ -34,17 +32,17 @@ export default async function Page() {
 
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Defaulter Count by Region
+            Top Defaulters (Bill Count)
           </h3>
           <div className="h-64">
             <BarChart
-              data={defaulterData}
-              xAxisKey="region"
+              data={topDefaulters}
+              xAxisKey="name"
               dataKeys={[
                 {
-                  key: "defaulters",
+                  key: "bill_count",
                   color: "#F59E0B",
-                  name: "Defaulter Count",
+                  name: "Unpaid Bills",
                 },
               ]}
             />
@@ -55,20 +53,20 @@ export default async function Page() {
       {/* Detailed Tables */}
       <GlassCard className="p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Regional Payment Risk Analysis
+          Defaulters List
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Region Area
+                  Customer Name
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Customer ID
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Defaulters
-                </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Overdue Pills
+                  Overdue Bills
                 </th>
                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Outstanding Amount
@@ -81,9 +79,9 @@ export default async function Page() {
             <tbody>
               {defaulterData.map((row, index) => {
                 const riskLevel =
-                  row.outstanding > 1000
+                  row.outstanding > 5000
                     ? "High"
-                    : row.outstanding > 500
+                    : row.outstanding > 1000
                     ? "Medium"
                     : "Low";
                 const riskColor =
@@ -99,10 +97,10 @@ export default async function Page() {
                     className="border-b border-gray-100 dark:border-gray-800 last:border-0"
                   >
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                      {row.region || "Central"} Area
+                      {row.name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
-                      {row.defaulters}
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {row.customer_id}
                     </td>
                     <td className="px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
                       {row.bill_count}

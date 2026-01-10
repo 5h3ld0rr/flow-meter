@@ -14,11 +14,15 @@ export const customerDbSchema = z.object({
       "Invalid phone"
     ),
   address: z.string().min(5, "Invalid address").max(500, "Invalid address"),
-  status: z.enum(["active", "inactive", "overdue"] as const, "Invalid status"),
-  type: z.enum(["household", "business", "government"] as const, {
-    required_error: "Customer type is required",
-    invalid_type_error: "Invalid customer type",
+  status: z.enum(["active", "inactive", "overdue"] as [string, ...string[]], {
+    message: "Invalid status",
   }),
+  type: z.enum(
+    ["household", "business", "government"] as [string, ...string[]],
+    {
+      message: "Invalid customer type",
+    }
+  ),
   balance: z.number("Invalid balance"),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),

@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui";
 import { BarChart, AreaChart } from "@/components/charts";
-import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
+import { getRevenueReport, getRevenueByUtilityType } from "@/lib/data/reports";
 import { AIAnalysisPanel } from "@/components/Reports";
 
 export default async function Page({
@@ -12,9 +12,9 @@ export default async function Page({
   const startDate = params.startDate ? new Date(params.startDate) : undefined;
   const endDate = params.endDate ? new Date(params.endDate) : undefined;
 
-  const [revenueData, regionalData] = await Promise.all([
+  const [revenueData, utilityData] = await Promise.all([
     getRevenueReport(startDate, endDate),
-    getRegionalReport(),
+    getRevenueByUtilityType(),
   ]);
 
   return (
@@ -47,12 +47,12 @@ export default async function Page({
 
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Regional Performance
+            Utility Performance
           </h3>
           <div className="h-64">
             <BarChart
-              data={regionalData}
-              xAxisKey="region"
+              data={utilityData}
+              xAxisKey="utility_type"
               dataKeys={[
                 {
                   key: "revenue",
@@ -68,14 +68,14 @@ export default async function Page({
       {/* Detailed Tables */}
       <GlassCard className="p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Top Consumers by Region
+          Revenue by Utility Type
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Region
+                  Utility Type
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Customers
@@ -92,28 +92,30 @@ export default async function Page({
               </tr>
             </thead>
             <tbody>
-              {regionalData.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                >
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                    {row.region} District
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.customers}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.consumption.toLocaleString()} kWh
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${row.revenue.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                    +8%
-                  </td>
-                </tr>
-              ))}
+              {utilityData.map((row, index) => {
+                return (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+                  >
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium capitalize">
+                      {row.utility_type}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {row.customers}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {row.consumption.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
+                      ${row.revenue.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-green-600 dark:text-green-400">
+                      +8%
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

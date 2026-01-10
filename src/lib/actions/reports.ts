@@ -1,6 +1,12 @@
 "use server";
 
-import { getRevenueReport, getRegionalReport } from "@/lib/data/reports";
+import {
+  getRevenueReport,
+  getConsumptionReport,
+  getCustomerReport,
+  getDefaultersReport,
+  getRevenueByUtilityType,
+} from "@/lib/data/reports";
 import {
   analyzeReportData,
   generateReportNarrative,
@@ -8,9 +14,9 @@ import {
 
 export const generateRevenueReportPDF = async () => {
   try {
-    const [revenueData, regionalData] = await Promise.all([
+    const [revenueData, utilityData] = await Promise.all([
       getRevenueReport(),
-      getRegionalReport(),
+      getRevenueByUtilityType(),
     ]);
 
     return {
@@ -37,8 +43,8 @@ export const generateRevenueReportPDF = async () => {
             }`,
           },
           {
-            label: "Total Regions",
-            value: regionalData.length.toString(),
+            label: "Utility Types",
+            value: utilityData.length.toString(),
           },
         ],
         sections: [
@@ -53,11 +59,11 @@ export const generateRevenueReportPDF = async () => {
             ],
           },
           {
-            title: "Regional Performance",
+            title: "Utility Performance",
             type: "table" as const,
-            data: regionalData,
+            data: utilityData,
             columns: [
-              { header: "Region", dataKey: "region" },
+              { header: "Utility", dataKey: "utility_type" },
               { header: "Customers", dataKey: "customers" },
               { header: "Consumption (kWh)", dataKey: "consumption" },
               { header: "Revenue ($)", dataKey: "revenue" },
@@ -77,15 +83,15 @@ export const generateRevenueReportPDF = async () => {
 
 export const analyzeRevenueReport = async () => {
   try {
-    const [revenueData, regionalData] = await Promise.all([
+    const [revenueData, utilityData] = await Promise.all([
       getRevenueReport(),
-      getRegionalReport(),
+      getRevenueByUtilityType(),
     ]);
 
     // Combine data into a single array for analysis
     const combinedData = [
       ...revenueData.map((r) => ({ type: "monthly_revenue", ...r })),
-      ...regionalData.map((r) => ({ type: "regional_performance", ...r })),
+      ...utilityData.map((r) => ({ type: "utility_performance", ...r })),
     ];
 
     const analysis = await analyzeReportData("Revenue", combinedData);
@@ -109,14 +115,14 @@ export const analyzeRevenueReport = async () => {
 
 export const analyzeConsumptionReport = async () => {
   try {
-    const [revenueData, regionalData] = await Promise.all([
-      getRevenueReport(),
-      getRegionalReport(),
+    const [consumptionData, utilityData] = await Promise.all([
+      getConsumptionReport(),
+      getRevenueByUtilityType(),
     ]);
 
     const combinedData = [
-      ...revenueData.map((r) => ({ type: "consumption_trend", ...r })),
-      ...regionalData.map((r) => ({ type: "regional_consumption", ...r })),
+      ...consumptionData.map((r) => ({ type: "consumption_trend", ...r })),
+      ...utilityData.map((r) => ({ type: "utility_consumption", ...r })),
     ];
 
     const analysis = await analyzeReportData("Consumption", combinedData);
@@ -143,14 +149,14 @@ export const analyzeConsumptionReport = async () => {
 
 export const analyzeCustomerReport = async () => {
   try {
-    const [revenueData, regionalData] = await Promise.all([
-      getRevenueReport(),
-      getRegionalReport(),
+    const [customerData, utilityData] = await Promise.all([
+      getCustomerReport(),
+      getRevenueByUtilityType(),
     ]);
 
     const combinedData = [
-      ...revenueData.map((r) => ({ type: "customer_growth", ...r })),
-      ...regionalData.map((r) => ({ type: "customer_distribution", ...r })),
+      ...customerData.map((r) => ({ type: "customer_growth", ...r })),
+      ...utilityData.map((r) => ({ type: "utility_customers", ...r })),
     ];
 
     const analysis = await analyzeReportData("Customer", combinedData);
@@ -174,14 +180,11 @@ export const analyzeCustomerReport = async () => {
 
 export const analyzeDefaultersReport = async () => {
   try {
-    const [revenueData, regionalData] = await Promise.all([
-      getRevenueReport(),
-      getRegionalReport(),
-    ]);
+    const defaulterData = await getDefaultersReport();
+    const topDefaulters = defaulterData.slice(0, 20); // Top 20 for analysis
 
     const combinedData = [
-      ...revenueData.map((r) => ({ type: "defaulter_trend", ...r })),
-      ...regionalData.map((r) => ({ type: "regional_defaulters", ...r })),
+      ...topDefaulters.map((r) => ({ type: "top_defaulter", ...r })),
     ];
 
     const analysis = await analyzeReportData("Defaulters", combinedData);

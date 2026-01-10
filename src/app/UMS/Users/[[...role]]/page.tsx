@@ -1,7 +1,6 @@
 import { Header } from "@/components/layout";
 import { getUserRoleStats, getUsersByRole } from "@/lib/data/users";
 import { UsersTable } from "@/components/Users";
-import { getCurrentUser } from "@/lib/session/user";
 import Link from "next/link";
 import { Button, GlassCard, Input } from "@/components/ui";
 import { Plus, Search, UserIcon } from "lucide-react";

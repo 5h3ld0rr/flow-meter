@@ -29,6 +29,7 @@ const FILES_ORDER = [
     'triggers.sql',
     'functions.sql',
     'stored-procedures.sql',
+    'views.sql',
 ];
 
 async function executeSqlFile(pool, filePath) {

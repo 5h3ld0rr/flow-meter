@@ -25,7 +25,7 @@ export async function getActivities(filters?: {
         CONCAT('reading_', r.id) as id,
         'Reading' as activity_type,
         CONCAT('Meter Reading: ', r.reading_value, ' (Meter: ', m.meter_id, ')') as description,
-        r.created_at,
+        r.reading_date as created_at,
         u.full_name as user_name,
         u.id as user_id,
         u.role as user_role,
@@ -41,7 +41,7 @@ export async function getActivities(filters?: {
         CONCAT('payment_', p.id) as id,
         'Payment' as activity_type,
         CONCAT('Payment Received: ', p.amount) as description,
-        p.created_at, -- Assuming created_at exists, falling back to payment_date if needed in valid SQL, but sticking to standard timestamp col
+        p.payment_date as created_at,
         u.full_name as user_name,
         u.id as user_id,
         u.role as user_role,

@@ -31,8 +31,36 @@ export default async function Layout({
           color="green"
         />
         <StatCard
-          title="Total Consumption"
-          value="245K kWh"
+          title="Monthly Consumption"
+          value={
+            <div className="flex flex-col gap-0.5 pointer-events-none">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold leading-tight">
+                  {stats.monthlyConsumption["electricity"]?.toLocaleString() ??
+                    "0"}
+                </span>
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  kWh
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold leading-tight">
+                  {stats.monthlyConsumption["water"]?.toLocaleString() ?? "0"}
+                </span>
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  L
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold leading-tight">
+                  {stats.monthlyConsumption["gas"]?.toLocaleString() ?? "0"}
+                </span>
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  m³
+                </span>
+              </div>
+            </div>
+          }
           icon={<TrendingUp size={24} />}
           trend={{
             value: 8,
@@ -52,7 +80,7 @@ export default async function Layout({
         />
         <StatCard
           title="Defaulters"
-          value="127"
+          value={stats.defaultersCount.toLocaleString()}
           icon={<AlertTriangle size={24} />}
           trend={{
             value: 3,
