@@ -3,12 +3,12 @@
 import { query } from "@/lib/db";
 import { createMeterSchema, updateMeterSchema } from "@/lib/schemas/meter";
 import { redirect } from "next/navigation";
-import { checkSerialNumberExists, getMeterCount } from "@/lib/data/meters";
+import {
+  checkSerialNumberExists,
+  getMeterCount,
+  getMeterById,
+} from "@/lib/data/meters";
 
-/**
- * Creates a new meter with parameterized SQL query
- * Protected against SQL injection via parameterized queries
- */
 export const createMeter = async (prevState: unknown, formData: FormData) => {
   const rawData = {
     serial_number: formData.get("serial_number") as string,
@@ -41,7 +41,6 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     const meterCount = await getMeterCount();
     const meterId = `M${String(meterCount + 1).padStart(3, "0")}`;
 
-    // Get internal customer ID from customer_id string
     const customerResult = await query<{ id: number }>(
       "SELECT id FROM Customers WHERE customer_id = @customerId",
       { customerId: data.customer_id }
@@ -53,7 +52,6 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
 
     const custIntId = customerResult.recordset[0].id;
 
-    // REFACTORED: Simple INSERT with parameterized query
     await query(
       `INSERT INTO Meters (meter_id, serial_number, customer_id, utility_type, location, install_date, status)
        VALUES (@meterId, @serialNumber, @customerId, @utilityType, @location, @installDate, 'active')`,
@@ -74,10 +72,6 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
   }
 };
 
-/**
- * Updates an existing meter with parameterized SQL query
- * Protected against SQL injection via parameterized queries
- */
 export const updateMeter = async (prevState: unknown, formData: FormData) => {
   try {
     const meterId = formData.get("meter_id") as string;
@@ -102,7 +96,6 @@ export const updateMeter = async (prevState: unknown, formData: FormData) => {
 
     const data = validationResult.data;
 
-    // Get internal customer ID from customer_id string if provided
     let custIntId: number | undefined;
     if (data.customer_id) {
       const customerResult = await query<{ id: number }>(
@@ -117,8 +110,6 @@ export const updateMeter = async (prevState: unknown, formData: FormData) => {
       custIntId = customerResult.recordset[0].id;
     }
 
-    // REFACTORED: Simple UPDATE with parameterized query
-    // Build dynamic query based on provided fields
     const updates: string[] = [];
     const params: Record<string, string | number | Date> = {
       meter_id: meterId,
@@ -163,15 +154,10 @@ export const updateMeter = async (prevState: unknown, formData: FormData) => {
   }
 };
 
-/**
- * Soft-deletes a meter with parameterized SQL query
- * Protected against SQL injection via parameterized queries
- */
 export const deleteMeter = async (
   id: string
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // REFACTORED: Simple soft-delete UPDATE with parameterized query
     await query(
       `UPDATE Meters 
        SET status = 'inactive', 
@@ -184,5 +170,27 @@ export const deleteMeter = async (
   } catch (error) {
     console.error("Error deleting meter:", error);
     return { success: false, message: "Failed to delete meter" };
+  }
+};
+
+export const verifyMeterIdAction = async (meterId: string) => {
+  try {
+    const meter = await getMeterById(meterId);
+    if (!meter) {
+      return { success: false, error: "Meter not found" };
+    }
+
+    return {
+      success: true,
+      data: {
+        customer_name: meter.customer_name,
+        location: meter.location,
+        utility_type: meter.utility_type,
+        last_reading_value: meter.last_reading_value,
+      },
+    };
+  } catch (error) {
+    console.error("Error verifying meter ID:", error);
+    return { success: false, error: "Failed to verify meter ID" };
   }
 };

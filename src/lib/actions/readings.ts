@@ -4,16 +4,18 @@ import { query } from "@/lib/db";
 import { CreateReadingInput, createReadingSchema } from "@/lib/schemas/reading";
 import { revalidatePath } from "next/cache";
 import { getMeterLastReading } from "@/lib/data/meters";
+import { verifySession } from "@/lib/session";
 
-/**
- * Creates a new meter reading with parameterized SQL queries
- * Protected against SQL injection via parameterized queries
- */
 export const createReading = async (
-  data: CreateReadingInput,
-  userId: string
+  data: CreateReadingInput
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const session = await verifySession();
+    if (!session || !session.userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+    const userId = session.userId;
+
     const meter = await getMeterLastReading(data.meter_id);
 
     if (!meter) {
@@ -38,7 +40,6 @@ export const createReading = async (
     const validData = validationResult.data;
     const consumption = validData.reading_value - previousReading;
 
-    // Get internal meter ID
     const meterResult = await query<{ id: number }>(
       "SELECT id FROM Meters WHERE meter_id = @meterId",
       { meterId: validData.meter_id }
@@ -50,7 +51,6 @@ export const createReading = async (
 
     const meterIntId = meterResult.recordset[0].id;
 
-    // REFACTORED: Simple INSERT with parameterized query
     await query(
       `INSERT INTO Readings (meter_id, reading_value, reading_date, consumption, status, notes, created_by)
        VALUES (@meterId, @readingValue, @readingDate, @consumption, 'submitted', @notes, @userId)`,
@@ -64,7 +64,6 @@ export const createReading = async (
       }
     );
 
-    // REFACTORED: Simple UPDATE with parameterized query
     await query(
       `UPDATE Meters
        SET last_reading_value = @readingValue,
@@ -87,10 +86,6 @@ export const createReading = async (
   }
 };
 
-/**
- * Validates a meter reading value
- * Uses parameterized queries for data retrieval
- */
 export const validateReading = async (
   meterId: string,
   value: number

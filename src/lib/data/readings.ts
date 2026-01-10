@@ -1,10 +1,19 @@
 import { query } from "@/lib/db";
 
-export async function getReadings(filters?: {
-  meterId?: string;
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<Reading[]> {
+export async function getReadings(
+  filters?: {
+    meterId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  },
+  limit?: number
+): Promise<
+  (Reading & {
+    meter_serial: string;
+    utility_type: string;
+    customer_name: string;
+  })[]
+> {
   const result = await query<
     Reading & {
       meter_serial: string;
@@ -13,6 +22,7 @@ export async function getReadings(filters?: {
     }
   >(
     `SELECT 
+    ${limit ? `TOP ${limit}` : ""}
         r.*,
         m.serial_number as meter_serial,
         m.utility_type,
