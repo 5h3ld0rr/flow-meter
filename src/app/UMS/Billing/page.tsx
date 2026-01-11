@@ -91,7 +91,10 @@ export default async function Page({
         billingSummary.endDate = formatDate(latest.reading_date);
       }
 
-      const tariffData = await getTariffRate(meter.utility_type);
+      const tariffData = await getTariffRate(
+        meter.utility_type,
+        meter.customer_type
+      );
       billingSummary.tariffRate = tariffData.rate;
       billingSummary.taxPercentage = tariffData.taxPercentage;
 

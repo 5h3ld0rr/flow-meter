@@ -84,8 +84,8 @@ export const SettingsClient = ({ tariffs }: { tariffs: Tariff[] }) => {
                               ? utility === "electricity"
                                 ? 0.15
                                 : utility === "water"
-                                ? 0.05
-                                : 0.25
+                                  ? 0.05
+                                  : 0.25
                               : 0);
 
                           return (
@@ -101,15 +101,14 @@ export const SettingsClient = ({ tariffs }: { tariffs: Tariff[] }) => {
                                 type="number"
                                 step="0.0001"
                                 defaultValue={rate}
-                                className="bg-white/50 dark:bg-slate-900/50 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors"
                                 required
                                 icon={
                                   <div className="text-xs font-medium text-gray-500">
                                     {utility === "electricity"
                                       ? "kWh "
                                       : utility === "water"
-                                      ? "L "
-                                      : "m³ "}
+                                        ? "L "
+                                        : "m³ "}
                                   </div>
                                 }
                               />
