@@ -1,7 +1,8 @@
-import { Button, GlassCard, Input } from "@/components/ui";
+import { GlassCard } from "@/components/ui";
 import { Header } from "@/components/layout";
-import { CreditCard, DollarSign, CheckCircle } from "lucide-react";
-import { PaymentsTable } from "@/components/Payments";
+import { CreditCard, DollarSign } from "lucide-react";
+import { PaymentsTable } from "@/components/Payments/PaymentsTable";
+import { ProcessPaymentForm } from "@/components/Payments/ProcessPaymentForm";
 import { getPayments, getPaymentStats } from "@/lib/data/payments";
 
 export default async function Page() {
@@ -24,36 +25,7 @@ export default async function Page() {
             Record Payment
           </h2>
 
-          <form className="space-y-4">
-            <Input label="Bill ID" placeholder="Enter bill ID" required />
-            <Input label="Customer ID" placeholder="Auto-filled" disabled />
-            <Input
-              label="Amount"
-              type="number"
-              placeholder="0.00"
-              required
-              icon={<DollarSign size={18} />}
-            />
-            <Input
-              label="Payment Method"
-              type="select"
-              placeholder="Select payment method"
-              required
-              options={[
-                { value: "cash", label: "Cash" },
-                { value: "card", label: "Card" },
-                { value: "online_transfer", label: "Online Transfer" },
-                { value: "check", label: "Check" },
-              ]}
-            />
-
-            <Input label="Transaction Reference" placeholder="Optional" />
-
-            <Button variant="primary" fullWidth type="button">
-              <CheckCircle size={18} className="mr-2" />
-              Process Payment
-            </Button>
-          </form>
+          <ProcessPaymentForm />
         </GlassCard>
 
         {/* Payment Summary Cards */}
@@ -69,11 +41,10 @@ export default async function Page() {
               ${stats.todayCollection.toLocaleString()}
             </p>
             <p
-              className={`text-sm mt-1 ${
-                stats.todayTrend >= 0
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
-              }`}
+              className={`text-sm mt-1 ${stats.todayTrend >= 0
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-600 dark:text-red-400"
+                }`}
             >
               {stats.todayTrend >= 0 ? "+" : ""}
               {stats.todayTrend}% from yesterday

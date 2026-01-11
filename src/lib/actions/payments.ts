@@ -46,21 +46,20 @@ export const recordPayment = async (
     const billIntId = billResult.recordset[0].id;
     const customerIntId = billResult.recordset[0].customer_id;
 
-    const paymentCount = await getPaymentCount();
-    const paymentId = `PAY${String(paymentCount + 1).padStart(3, "0")}`;
+
 
     // REFACTORED: Simple INSERT with parameterized query
     await query(
       `INSERT INTO Payments (
-        payment_id, bill_id, customer_id, amount, payment_method,
+        bill_id, customer_id, amount, payment_method,
         transaction_reference, payment_date, status, notes, created_by
       )
       VALUES (
-        @paymentId, @billId, @customerId, @amount, @paymentMethod,
+        @billId, @customerId, @amount, @paymentMethod,
         @transactionRef, @paymentDate, 'completed', @notes, @userId
       )`,
       {
-        paymentId,
+
         billId: billIntId,
         customerId: customerIntId,
         amount: data.amount,
@@ -94,9 +93,16 @@ export const recordPayment = async (
       }
     );
 
+    // Fetch the generated Payment ID
+    const paymentResult = await query<{ payment_id: string }>(
+      "SELECT TOP 1 payment_id FROM Payments WHERE bill_id = @billId ORDER BY id DESC",
+      { billId: billIntId }
+    );
+    const generatedPaymentId = paymentResult.recordset[0]?.payment_id;
+
     revalidatePath("/UMS/Payments");
     revalidatePath("/UMS/Dashboard");
-    return { success: true, paymentId };
+    return { success: true, paymentId: generatedPaymentId };
   } catch (error) {
     console.error("Error recording payment:", error);
     return { success: false, error: "Failed to record payment" };

@@ -442,8 +442,8 @@ export default async function Page({
                         bill.status === "paid"
                           ? "success"
                           : bill.status === "overdue"
-                          ? "danger"
-                          : "warning"
+                            ? "danger"
+                            : "warning"
                       }
                       size="sm"
                     >
@@ -451,7 +451,11 @@ export default async function Page({
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      href={`/UMS/Billing/${bill.id}`}
+                    >
                       View
                     </Button>
                   </td>
