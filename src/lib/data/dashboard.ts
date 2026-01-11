@@ -78,62 +78,88 @@ export async function getConsumptionTrend(
 export async function getTopConsumers(
   limit: number = 5
 ): Promise<TopConsumer[]> {
-  const result = await execute<{
+  const result = await query<{
     name: string;
-    total_consumption: number;
     utility_type: string;
-  }>("sp_GetTopConsumers", { limit });
+    current_consumption: number;
+    prev_consumption: number;
+  }>(
+    `WITH MonthlyStats AS (
+      SELECT 
+          c.id,
+          c.name,
+          MAX(m.utility_type) as utility_type,
+          SUM(CASE 
+              WHEN r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()), 0) 
+              THEN r.consumption ELSE 0 END) as current_consumption,
+          SUM(CASE 
+              WHEN r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()) - 1, 0)
+               AND r.reading_date < DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()), 0)
+              THEN r.consumption ELSE 0 END) as prev_consumption
+      FROM Customers c
+      JOIN Meters m ON c.id = m.customer_id
+      JOIN Readings r ON m.id = r.meter_id
+      WHERE r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()) - 1, 0)
+      GROUP BY c.id, c.name
+    )
+    SELECT TOP (@limit)
+      name,
+      utility_type,
+      current_consumption,
+      prev_consumption
+    FROM MonthlyStats
+    ORDER BY current_consumption DESC`,
+    { limit }
+  );
 
-  return result.recordset.map((row) => ({
-    name: row.name,
-    consumption: `${row.total_consumption.toString()} ${
-      UTILITIES[row.utility_type as keyof typeof UTILITIES].unit
-    }`,
-    change: "+12%",
-  }));
+  return result.recordset.map((row) => {
+    let changePercent = 0;
+    if (row.prev_consumption > 0) {
+      changePercent =
+        ((row.current_consumption - row.prev_consumption) /
+          row.prev_consumption) *
+        100;
+    } else if (row.current_consumption > 0) {
+      changePercent = 100;
+    }
+
+    const sign = changePercent > 0 ? "+" : "";
+
+    return {
+      name: row.name,
+      consumption: `${row.current_consumption.toFixed(0)} ${
+        UTILITIES[row.utility_type as keyof typeof UTILITIES]?.unit || "Units"
+      }`,
+      change: `${sign}${changePercent.toFixed(1)}%`,
+    };
+  });
 }
 
 export async function getRecentActivities(limit: number = 10) {
   const result = await query<{
-    id: string;
+    id: number;
     activity_type: string;
     description: string;
     customer: string;
     amount: number | null;
     time: Date;
   }>(
-    `SELECT TOP (@limit) * FROM (
-      -- Readings
-      SELECT 
-        CONCAT('reading_', r.id) as id,
-        'reading' as activity_type,
-        CONCAT('Reading: ', r.reading_value, ' (Meter: ', m.serial_number, ')') as description,
-        c.name as customer,
-        NULL as amount,
-        r.reading_date as time
-      FROM Readings r
-      INNER JOIN Meters m ON r.meter_id = m.id
-      INNER JOIN Customers c ON m.customer_id = c.id
-
-      UNION ALL
-
-      -- Payments
-      SELECT 
-        CONCAT('payment_', p.id) as id,
-        'payment' as activity_type,
-        'Payment Received' as description,
-        c.name as customer,
-        p.amount,
-        p.payment_date as time
-      FROM Payments p
-      INNER JOIN Customers c ON p.customer_id = c.id
-    ) AS combined_activity
-    ORDER BY time DESC`,
+    `SELECT TOP (@limit)
+      a.id,
+      a.activity_type,
+      a.description,
+      c.name as customer,
+      a.amount,
+      a.created_at as time
+     FROM Activities a
+     LEFT JOIN Customers c ON a.customer_id = c.id
+     ORDER BY a.created_at DESC`,
     { limit }
   );
 
   return result.recordset.map((activity) => ({
     ...activity,
+    id: activity.id.toString(),
     time: new Date(activity.time).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",

@@ -53,16 +53,31 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
+    WITH MonthlyStats AS (
+      SELECT 
+          c.id,
+          c.name,
+          MAX(m.utility_type) as utility_type,
+          SUM(CASE 
+              WHEN r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()), 0) 
+              THEN r.consumption ELSE 0 END) as current_consumption,
+          SUM(CASE 
+              WHEN r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()) - 1, 0)
+               AND r.reading_date < DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()), 0)
+              THEN r.consumption ELSE 0 END) as prev_consumption
+      FROM Customers c
+      JOIN Meters m ON c.id = m.customer_id
+      JOIN Readings r ON m.id = r.meter_id
+      WHERE r.reading_date >= DATEADD(month, DATEDIFF(month, 0, GETUTCDATE()) - 1, 0)
+      GROUP BY c.id, c.name
+    )
     SELECT TOP (@limit)
-        c.name,
-        SUM(r.consumption) as total_consumption,
-        MAX(m.utility_type) as utility_type
-    FROM Customers c
-    INNER JOIN Meters m ON c.id = m.customer_id
-    INNER JOIN Readings r ON m.id = r.meter_id
-    WHERE r.reading_date >= DATEADD(YEAR, -2, GETUTCDATE())
-    GROUP BY c.id, c.name
-    ORDER BY total_consumption DESC;
+      name,
+      utility_type,
+      current_consumption,
+      prev_consumption
+    FROM MonthlyStats
+    ORDER BY current_consumption DESC;
 END;
 GO
 
@@ -78,7 +93,7 @@ BEGIN
         a.description,
         c.name as customer,
         a.amount,
-        dbo.TimeAgo(a.created_at) as time
+        a.created_at as time
     FROM Activities a
     LEFT JOIN Customers c ON a.customer_id = c.id
     ORDER BY a.created_at DESC;
