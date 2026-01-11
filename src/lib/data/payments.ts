@@ -1,4 +1,4 @@
-import { execute, query } from "@/lib/db";
+import { query } from "@/lib/db";
 
 export async function getPayments(filters?: {
   customerId?: string;
@@ -53,40 +53,68 @@ export async function getPaymentById(
 export async function getPaymentStats(): Promise<{
   todayCollection: number;
   todayTrend: number;
-  monthlyCollection: number;
-  monthlyTarget: number;
+  monthlyCollection: number; // This month
+  monthlyTarget: number; // Last month (as target)
   monthlyPercentage: number;
   pendingAmount: number;
   pendingCount: number;
 }> {
-  // RETAINED: Complex aggregation over multiple results
-  const result = await execute<any>("sp_GetPaymentStats");
+  // 1. Today and Yesterday
+  const dailyStats = await query<{
+    today_amount: number;
+    yesterday_amount: number;
+  }>(`
+    SELECT
+      (SELECT ISNULL(SUM(amount), 0) FROM Payments WHERE CAST(payment_date AS DATE) = CAST(GETDATE() AS DATE)) as today_amount,
+      (SELECT ISNULL(SUM(amount), 0) FROM Payments WHERE CAST(payment_date AS DATE) = CAST(GETDATE() - 1 AS DATE)) as yesterday_amount
+  `);
 
-  const datasets = result.recordsets as any[][];
-  const todayData = datasets[0][0];
-  const monthlyData = datasets[1][0];
-  const pendingData = datasets[2][0];
-
+  const { today_amount, yesterday_amount } = dailyStats.recordset[0];
   const todayTrend =
-    todayData.yesterday > 0
-      ? Math.round(
-          ((todayData.today - todayData.yesterday) / todayData.yesterday) * 100
-        )
+    yesterday_amount > 0
+      ? Math.round(((today_amount - yesterday_amount) / yesterday_amount) * 100)
       : 0;
 
-  const monthlyTarget = 58000;
+  // 2. This Month and Last Month
+  const monthlyStats = await query<{
+    this_month_amount: number;
+    last_month_amount: number;
+  }>(`
+    SELECT
+      (SELECT ISNULL(SUM(amount), 0) FROM Payments 
+       WHERE MONTH(payment_date) = MONTH(GETDATE()) AND YEAR(payment_date) = YEAR(GETDATE())) as this_month_amount,
+      (SELECT ISNULL(SUM(amount), 0) FROM Payments 
+       WHERE MONTH(payment_date) = MONTH(DATEADD(month, -1, GETDATE())) AND YEAR(payment_date) = YEAR(DATEADD(month, -1, GETDATE()))) as last_month_amount
+  `);
+
+  const { this_month_amount, last_month_amount } = monthlyStats.recordset[0];
+  const monthlyTarget = last_month_amount > 0 ? last_month_amount : 1000; // Fallback if no data
   const monthlyPercentage = Math.round(
-    (monthlyData.total / monthlyTarget) * 100
+    (this_month_amount / monthlyTarget) * 100
   );
 
+  // 3. Pending (Unpaid Bills)
+  const pendingStats = await query<{
+    pending_amount: number;
+    pending_count: number;
+  }>(`
+    SELECT 
+      ISNULL(SUM(total_amount), 0) as pending_amount,
+      COUNT(id) as pending_count
+    FROM Bills
+    WHERE status IN ('generated', 'sent', 'overdue')
+  `);
+
+  const { pending_amount, pending_count } = pendingStats.recordset[0];
+
   return {
-    todayCollection: todayData.today,
+    todayCollection: today_amount,
     todayTrend,
-    monthlyCollection: monthlyData.total,
+    monthlyCollection: this_month_amount,
     monthlyTarget,
     monthlyPercentage,
-    pendingAmount: pendingData.amount,
-    pendingCount: pendingData.count,
+    pendingAmount: pending_amount,
+    pendingCount: pending_count,
   };
 }
 

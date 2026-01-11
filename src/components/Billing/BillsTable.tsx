@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Column, Badge, Button } from "@/components/ui";
+import { Table, Column, Badge, Button, toast } from "@/components/ui";
 import type { IRecordSet } from "mssql";
 
 interface BillsTableProps {
@@ -9,7 +9,21 @@ interface BillsTableProps {
 
 export const BillsTable = ({ bills }: BillsTableProps) => {
   const columns: Column[] = [
-    { key: "bill_id", label: "Bill ID" },
+    {
+      key: "bill_id",
+      label: "Bill ID",
+      render: (billId: string) => (
+        <span
+          className="cursor-pointer"
+          onClick={async () => {
+            await navigator.clipboard.writeText(billId);
+            toast("success", "Bill ID copied to clipboard");
+          }}
+        >
+          {billId}
+        </span>
+      ),
+    },
     { key: "customer_name", label: "Customer" },
     {
       key: "created_at",
@@ -21,7 +35,7 @@ export const BillsTable = ({ bills }: BillsTableProps) => {
       key: "total_amount",
       label: "Amount",
       align: "center",
-      render: (amount: number) => `Rs. ${amount}`,
+      render: (amount: number) => `LKR ${amount}`,
     },
     {
       key: "status",
@@ -33,8 +47,8 @@ export const BillsTable = ({ bills }: BillsTableProps) => {
             status === "paid"
               ? "success"
               : status === "overdue"
-              ? "danger"
-              : "warning"
+                ? "danger"
+                : "warning"
           }
           size="sm"
         >

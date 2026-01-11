@@ -69,7 +69,7 @@ export const BillEmail = ({
     <Html>
       <Head />
       <Preview>
-        Your {utilityType || "utility"} bill {billId} is ready - Amount Due: Rs.{" "}
+        Your {utilityType || "utility"} bill {billId} is ready - Amount Due: LKR{" "}
         {amount.toFixed(2)}
       </Preview>
       <Body style={main}>
@@ -150,7 +150,7 @@ export const BillEmail = ({
                   </Column>
                   <Column style={valueColumn}>
                     <Text style={value}>
-                      Rs. {tariffRate.toFixed(2)}/{getUnitLabel(utilityType)}
+                      LKR {tariffRate.toFixed(2)}/{getUnitLabel(utilityType)}
                     </Text>
                   </Column>
                 </Row>
@@ -162,7 +162,7 @@ export const BillEmail = ({
                     <Text style={label}>Base Amount:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>Rs. {baseAmount.toFixed(2)}</Text>
+                    <Text style={value}>LKR {baseAmount.toFixed(2)}</Text>
                   </Column>
                 </Row>
               )}
@@ -173,7 +173,7 @@ export const BillEmail = ({
                     <Text style={label}>Tax:</Text>
                   </Column>
                   <Column style={valueColumn}>
-                    <Text style={value}>Rs. {taxAmount.toFixed(2)}</Text>
+                    <Text style={value}>LKR {taxAmount.toFixed(2)}</Text>
                   </Column>
                 </Row>
               )}
@@ -185,7 +185,7 @@ export const BillEmail = ({
                   <Text style={totalLabel}>Total Amount:</Text>
                 </Column>
                 <Column style={valueColumn}>
-                  <Text style={totalValue}>Rs. {amount.toFixed(2)}</Text>
+                  <Text style={totalValue}>LKR {amount.toFixed(2)}</Text>
                 </Column>
               </Row>
 

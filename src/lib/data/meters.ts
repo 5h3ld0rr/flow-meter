@@ -31,6 +31,7 @@ export async function getMeterById(id: string) {
       customer_display_id: string;
       customer_name: string;
       customer_email: string;
+      customer_type: string;
       last_reading_value: number | null;
       last_reading_date: Date | null;
     }
@@ -40,6 +41,7 @@ export async function getMeterById(id: string) {
         c.customer_id as customer_display_id,
         c.name as customer_name,
         c.email as customer_email,
+        c.type as customer_type,
         (SELECT TOP 1 r.reading_value FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_value,
         (SELECT TOP 1 r.reading_date FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_date
     FROM Meters m

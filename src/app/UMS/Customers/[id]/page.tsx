@@ -124,7 +124,7 @@ export default async function Page({
                     : "text-green-600 dark:text-green-400"
                 }`}
               >
-                ${customer.balance.toFixed(2)}
+                LKR {customer.balance.toFixed(2)}
               </p>
             </div>
             <div>
@@ -132,7 +132,7 @@ export default async function Page({
                 Total Billed
               </p>
               <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-                ${totalBilled.toFixed(2)}
+                LKR {totalBilled.toFixed(2)}
               </p>
             </div>
             <div>
@@ -140,7 +140,7 @@ export default async function Page({
                 Total Paid
               </p>
               <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-                ${totalPaid.toFixed(2)}
+                LKR {totalPaid.toFixed(2)}
               </p>
             </div>
           </div>
@@ -261,7 +261,7 @@ export default async function Page({
                     {bill.consumption}
                   </td>
                   <td className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${Number(bill.total_amount).toFixed(2)}
+                    LKR {Number(bill.total_amount).toFixed(2)}
                   </td>
                   <td className="py-3 px-4">
                     <Badge
@@ -269,8 +269,8 @@ export default async function Page({
                         bill.status === "paid"
                           ? "success"
                           : bill.status === "overdue"
-                          ? "danger"
-                          : "warning"
+                            ? "danger"
+                            : "warning"
                       }
                       size="sm"
                     >
@@ -331,7 +331,7 @@ export default async function Page({
                     {payment.payment_method}
                   </td>
                   <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">
-                    ${Number(payment.amount).toFixed(2)}
+                    LKR {Number(payment.amount).toFixed(2)}
                   </td>
                   <td className="py-3 px-4">
                     <Badge

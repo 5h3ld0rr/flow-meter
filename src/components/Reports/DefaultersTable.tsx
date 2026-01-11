@@ -35,7 +35,7 @@ export const DefaultersTable = ({ data }: DefaultersTableProps) => {
       align: "right",
       render: (value: number) => (
         <span className="text-red-600 font-semibold">
-          ${value.toLocaleString()}
+          LKR {value.toLocaleString()}
         </span>
       ),
     },
@@ -48,14 +48,14 @@ export const DefaultersTable = ({ data }: DefaultersTableProps) => {
           row.outstanding > 5000
             ? "High"
             : row.outstanding > 1000
-            ? "Medium"
-            : "Low";
+              ? "Medium"
+              : "Low";
         const riskColor =
           riskLevel === "High"
             ? "text-red-600"
             : riskLevel === "Medium"
-            ? "text-amber-600"
-            : "text-green-600";
+              ? "text-amber-600"
+              : "text-green-600";
 
         return <span className={`font-bold ${riskColor}`}>{riskLevel}</span>;
       },

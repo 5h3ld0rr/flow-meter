@@ -21,12 +21,12 @@ export default async function Layout({
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
-          title="Total Revenue"
-          value={`$${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
+          title="Monthly Revenue"
+          value={`LKR ${(stats.totalRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{
-            value: stats.monthlyRevenueTrend,
-            isPositive: stats.monthlyRevenueTrend >= 0,
+            value: stats.revenueTrend,
+            isPositive: stats.revenueTrend >= 0,
           }}
           color="green"
         />
@@ -63,8 +63,8 @@ export default async function Layout({
           }
           icon={<TrendingUp size={24} />}
           trend={{
-            value: 8,
-            isPositive: true,
+            value: stats.consumptionTrend,
+            isPositive: stats.consumptionTrend >= 0,
           }}
           color="blue"
         />
@@ -83,7 +83,7 @@ export default async function Layout({
           value={stats.defaultersCount.toLocaleString()}
           icon={<AlertTriangle size={24} />}
           trend={{
-            value: 3,
+            value: stats.defaultersTrend,
             isPositive: false,
           }}
           color="red"

@@ -1,6 +1,9 @@
-CREATE DATABASE FlowMeter;
 
 CREATE LOGIN FlowMeter WITH PASSWORD = 'passwordhere';
+
+CREATE DATABASE FlowMeter;
+
+USE FlowMeter;
 
 CREATE USER FlowMeter FOR LOGIN FlowMeter;
 
