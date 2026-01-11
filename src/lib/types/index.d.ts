@@ -109,7 +109,7 @@ declare global {
   }
 
   interface RecordPaymentRequest {
-    bill_id: number;
+    bill_id: string | number;
     amount: number;
     payment_method: "cash" | "card" | "online" | "check";
     transaction_reference?: string;
@@ -164,4 +164,4 @@ declare global {
   }
 }
 
-export {};
+export { };

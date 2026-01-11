@@ -52,8 +52,8 @@ export default async function Page({
                   bill.status === "paid"
                     ? "success"
                     : bill.status === "overdue"
-                    ? "danger"
-                    : "warning"
+                      ? "danger"
+                      : "warning"
                 }
                 className="text-lg px-4 py-1"
               >

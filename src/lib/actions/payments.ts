@@ -4,11 +4,6 @@ import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getBillForPayment } from "@/lib/data/payments";
 
-/**
- * Records a payment with parameterized SQL queries
- * Handles bill status update and customer balance adjustment
- * Protected against SQL injection via parameterized queries
- */
 export const recordPayment = async (
   data: RecordPaymentRequest,
   userId: number
@@ -46,8 +41,8 @@ export const recordPayment = async (
     const billIntId = billResult.recordset[0].id;
     const customerIntId = billResult.recordset[0].customer_id;
 
-    // Insert payment and get ID in same batch (works with triggers)
-    const paymentResult = await query<{ id: number; payment_id: string }>(
+    // REFACTORED: Simple INSERT with parameterized query
+    await query(
       `INSERT INTO Payments (
         bill_id, customer_id, amount, payment_method,
         transaction_reference, payment_date, status, notes, created_by
@@ -55,10 +50,7 @@ export const recordPayment = async (
       VALUES (
         @billId, @customerId, @amount, @paymentMethod,
         @transactionRef, @paymentDate, 'completed', @notes, @userId
-      );
-      
-      DECLARE @insertedId INT = CAST(SCOPE_IDENTITY() AS INT);
-      SELECT @insertedId as id, payment_id FROM Payments WHERE id = @insertedId;`,
+      )`,
       {
         billId: billIntId,
         customerId: customerIntId,
@@ -70,8 +62,6 @@ export const recordPayment = async (
         userId,
       }
     );
-
-    const paymentId = paymentResult.recordset[0].payment_id;
 
     // REFACTORED: Simple UPDATE with parameterized query
     await query(
@@ -95,9 +85,16 @@ export const recordPayment = async (
       }
     );
 
+    // Fetch the generated Payment ID
+    const paymentResult = await query<{ payment_id: string }>(
+      "SELECT TOP 1 payment_id FROM Payments WHERE bill_id = @billId ORDER BY id DESC",
+      { billId: billIntId }
+    );
+    const generatedPaymentId = paymentResult.recordset[0]?.payment_id;
+
     revalidatePath("/UMS/Payments");
     revalidatePath("/UMS/Dashboard");
-    return { success: true, paymentId };
+    return { success: true, paymentId: generatedPaymentId };
   } catch (error) {
     console.error("Error recording payment:", error);
     return { success: false, error: "Failed to record payment" };
