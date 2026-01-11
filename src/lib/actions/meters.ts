@@ -14,7 +14,7 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     serial_number: formData.get("serial_number") as string,
     customer_id: formData.get("customer_id") as string,
     utility_type: formData.get("utility_type") as string,
-    location: formData.get("location") as string,
+
     install_date: formData.get("install_date")
       ? new Date(formData.get("install_date") as string)
       : new Date(),
@@ -41,8 +41,8 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     const meterCount = await getMeterCount();
     const meterId = `M${String(meterCount + 1).padStart(3, "0")}`;
 
-    const customerResult = await query<{ id: number }>(
-      "SELECT id FROM Customers WHERE customer_id = @customerId",
+    const customerResult = await query<{ id: number; address: string }>(
+      "SELECT id, address FROM Customers WHERE customer_id = @customerId",
       { customerId: data.customer_id }
     );
 
@@ -51,6 +51,7 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     }
 
     const custIntId = customerResult.recordset[0].id;
+    const customerAddress = customerResult.recordset[0].address;
 
     await query(
       `INSERT INTO Meters (meter_id, serial_number, customer_id, utility_type, location, install_date, status)
@@ -60,7 +61,7 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
         serialNumber: data.serial_number,
         customerId: custIntId,
         utilityType: data.utility_type,
-        location: data.location,
+        location: customerAddress,
         installDate: data.install_date,
       }
     );
