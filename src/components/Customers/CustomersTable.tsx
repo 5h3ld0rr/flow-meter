@@ -25,8 +25,8 @@ const columns = [
     label: "Name",
   },
   {
-    key: "email",
-    label: "Email",
+    key: "address",
+    label: "Address",
   },
   {
     key: "type",
@@ -60,14 +60,6 @@ const columns = [
         </Badge>
       );
     },
-  },
-  {
-    key: "phone",
-    label: "Phone",
-  },
-  {
-    key: "address",
-    label: "Address",
   },
   {
     key: "utilities",

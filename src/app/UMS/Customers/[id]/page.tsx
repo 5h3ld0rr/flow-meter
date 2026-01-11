@@ -41,6 +41,7 @@ export default async function Page({
       <Header
         title={customer.name}
         subtitle={`Customer ID: ${customer.customer_id}`}
+        copyText={customer.customer_id}
         showBackButton
       />
 
