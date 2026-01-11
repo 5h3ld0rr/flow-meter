@@ -2,8 +2,8 @@ import { Header } from "@/components/layout";
 import { getUserRoleStats, getUsersByRole } from "@/lib/data/users";
 import { UsersTable } from "@/components/Users";
 import Link from "next/link";
-import { Button, GlassCard, Input } from "@/components/ui";
-import { Plus, Search, UserIcon } from "lucide-react";
+import { Button, GlassCard, SearchInput } from "@/components/ui";
+import { Plus, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES } from "@/constants";
 
@@ -99,14 +99,10 @@ export default async function Page({
           {/* Actions Bar */}
           <GlassCard className="p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative w-full md:w-96">
-                <Input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  icon={<Search size={18} />}
-                  defaultValue={_searchParams.search}
-                />
-              </div>
+              <SearchInput
+                placeholder="Search users by name or email..."
+                className="md:w-96"
+              />
               <Button
                 variant="primary"
                 href="/UMS/Users/New"
