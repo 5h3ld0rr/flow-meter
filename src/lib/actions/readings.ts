@@ -52,8 +52,8 @@ export const createReading = async (
     const meterIntId = meterResult.recordset[0].id;
 
     await query(
-      `INSERT INTO Readings (meter_id, reading_value, reading_date, consumption, status, notes, created_by)
-       VALUES (@meterId, @readingValue, @readingDate, @consumption, 'submitted', @notes, @userId)`,
+      `INSERT INTO Readings (meter_id, reading_value, reading_date, consumption, notes, created_by)
+       VALUES (@meterId, @readingValue, @readingDate, @consumption, @notes, @userId)`,
       {
         meterId: meterIntId,
         readingValue: validData.reading_value,

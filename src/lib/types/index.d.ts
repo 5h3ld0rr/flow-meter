@@ -47,7 +47,6 @@ declare global {
     reading_value: number;
     reading_date: Date;
     consumption: number;
-    status: "submitted" | "verified" | "disputed";
     notes: string | null;
     created_by: number;
     created_at: Date;

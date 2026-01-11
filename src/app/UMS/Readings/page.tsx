@@ -1,4 +1,4 @@
-import { Badge, GlassCard } from "@/components/ui";
+import { GlassCard } from "@/components/ui";
 import { Header } from "@/components/layout";
 import { getReadings } from "@/lib/data/readings";
 import { ReadingForm } from "@/components/Readings/ReadingForm";
@@ -50,15 +50,8 @@ export default async function Page({
                         {new Date(reading.reading_date).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge
-                      variant={
-                        reading.status === "submitted" ? "success" : "warning"
-                      }
-                      size="sm"
-                    >
-                      {reading.status}
-                    </Badge>
                   </div>
+
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">
                       Reading:
