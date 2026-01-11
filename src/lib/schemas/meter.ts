@@ -25,7 +25,7 @@ export const meterSchema = z.object({
     .optional(),
 });
 
-export const createMeterSchema = meterSchema;
+export const createMeterSchema = meterSchema.omit({ location: true });
 
 export const updateMeterSchema = meterSchema.partial().extend({
   status: z.enum(["active", "inactive", "maintenance"]).optional(),

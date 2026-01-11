@@ -29,18 +29,20 @@ export default function Page() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Meter Type
             </label>
-            <select className="w-full px-4 py-2.5 rounded-lg glass text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>Electricity</option>
-              <option>Water</option>
-              <option>Gas</option>
+            <select
+              name="utility_type"
+              className="w-full px-4 py-2.5 rounded-lg glass text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="electricity">Electricity</option>
+              <option value="water">Water</option>
+              <option value="gas">Gas</option>
             </select>
           </div>
-          <Input label="Serial Number" placeholder="ELC-2024-XXX" required />
-          <Input label="Customer ID" placeholder="C001" required />
-          <Input label="Installation Date" type="date" required />
+          <Input label="Serial Number" name="serial_number" placeholder="ELC-2024-XXX" required />
+          <Input label="Customer ID" name="customer_id" placeholder="C001" required />
+          <Input label="Installation Date" name="install_date" type="date" required />
         </div>
-        <Input label="Location" placeholder="123 Main Street, City" required />
-        <Input label="Initial Reading" type="number" placeholder="0" required />
+        <Input label="Initial Reading" name="initial_reading" type="number" placeholder="0" required />
 
         <div className="flex gap-3 pt-4">
           <Button variant="primary" type="submit" fullWidth>
