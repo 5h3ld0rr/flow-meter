@@ -155,8 +155,6 @@ export default async function Page({
             <BillingStepOne
               initialCustomerId={billingSummary.customerId}
               initialMeterId={billingSummary.meterId}
-              initialStartDate={billingSummary.startDate}
-              initialEndDate={billingSummary.endDate}
             />
           )}
 
