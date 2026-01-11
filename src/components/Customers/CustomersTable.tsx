@@ -127,7 +127,7 @@ const columns = [
               : "text-green-600 dark:text-green-400"
           }
         >
-          ${balance.toFixed(2)}
+          LKR {balance.toFixed(2)}
         </span>
       );
     },

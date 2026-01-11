@@ -125,7 +125,7 @@ export function BillingForm({
         ["Previous Reading", `${bill.previousReading?.toFixed(2) || 0} units`],
         ["Current Reading", `${bill.currentReading?.toFixed(2) || 0} units`],
         ["Consumption", `${bill.consumption?.toFixed(2) || 0} units`],
-        ["Tariff Rate", `Rs. ${bill.tariffRate?.toFixed(4) || 0}/unit`],
+        ["Tariff Rate", `LKR ${bill.tariffRate?.toFixed(4) || 0}/unit`],
       ];
 
       autoTable(doc, {
@@ -147,8 +147,8 @@ export function BillingForm({
 
       // Charges Breakdown Table
       const chargesData = [
-        ["Base Amount", `Rs. ${bill.baseAmount?.toFixed(2) || 0}`],
-        ["Tax", `Rs. ${bill.taxAmount?.toFixed(2) || 0}`],
+        ["Base Amount", `LKR ${bill.baseAmount?.toFixed(2) || 0}`],
+        ["Tax", `LKR ${bill.taxAmount?.toFixed(2) || 0}`],
       ];
 
       autoTable(doc, {
@@ -180,7 +180,7 @@ export function BillingForm({
       doc.setFontSize(14);
       doc.text("TOTAL AMOUNT DUE:", 25, totalY + 13);
       doc.text(
-        `Rs. ${bill.amount?.toFixed(2) || 0}`,
+        `LKR ${bill.amount?.toFixed(2) || 0}`,
         pageWidth - 25,
         totalY + 13,
         { align: "right" }
@@ -275,7 +275,7 @@ export function BillingForm({
             Base Amount
           </span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            Rs. {billingSummary.amount.toFixed(2)}
+            LKR {billingSummary.amount.toFixed(2)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -283,7 +283,7 @@ export function BillingForm({
             Tax ({billingSummary.taxPercentage}%)
           </span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            Rs. {billingSummary.tax.toFixed(2)}
+            LKR {billingSummary.tax.toFixed(2)}
           </span>
         </div>
         <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -291,7 +291,7 @@ export function BillingForm({
             Total Amount
           </span>
           <span className="text-xl font-bold text-blue-600 dark:text-cyan-400">
-            Rs. {billingSummary.total.toFixed(2)}
+            LKR {billingSummary.total.toFixed(2)}
           </span>
         </div>
       </div>

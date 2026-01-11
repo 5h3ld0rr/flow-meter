@@ -35,7 +35,7 @@ export const BillsTable = ({ bills }: BillsTableProps) => {
       key: "total_amount",
       label: "Amount",
       align: "center",
-      render: (amount: number) => `Rs. ${amount}`,
+      render: (amount: number) => `LKR ${amount}`,
     },
     {
       key: "status",

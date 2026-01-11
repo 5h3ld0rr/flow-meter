@@ -3,7 +3,7 @@ import { query } from "@/lib/db";
 // Data Layer - READ operations for pages
 
 export async function getRevenueReport(startDate?: Date, endDate?: Date) {
-  // Default to last 10 years if not provided
+  // Default to last 10 years if not provided (keeping existing logic)
   const end = endDate || new Date();
   const start =
     startDate ||
@@ -15,14 +15,22 @@ export async function getRevenueReport(startDate?: Date, endDate?: Date) {
     target: number;
   }>(
     `
+    WITH MonthlyData AS (
+      SELECT 
+        FORMAT(payment_date, 'MMM yyyy') as month_label,
+        YEAR(payment_date) as y,
+        MONTH(payment_date) as m,
+        SUM(amount) as revenue
+      FROM Payments
+      WHERE payment_date >= @start AND payment_date <= @end
+      GROUP BY FORMAT(payment_date, 'MMM yyyy'), YEAR(payment_date), MONTH(payment_date)
+    )
     SELECT 
-      FORMAT(payment_date, 'MMM yyyy') as month,
-      SUM(amount) as revenue,
-      50000 as target -- Static target for now
-    FROM Payments
-    WHERE payment_date >= @start AND payment_date <= @end
-    GROUP BY FORMAT(payment_date, 'MMM yyyy'), YEAR(payment_date), MONTH(payment_date)
-    ORDER BY YEAR(payment_date), MONTH(payment_date)
+      month_label as month,
+      revenue,
+      ISNULL(CAST(AVG(revenue) OVER () AS INT), 0) as target
+    FROM MonthlyData
+    ORDER BY y, m
     `,
     { start, end }
   );
@@ -40,14 +48,22 @@ export async function getConsumptionReport(startDate?: Date, endDate?: Date) {
     target: number;
   }>(
     `
+    WITH MonthlyData AS (
+      SELECT 
+        FORMAT(reading_date, 'MMM yyyy') as month_label,
+        YEAR(reading_date) as y,
+        MONTH(reading_date) as m,
+        SUM(consumption) as consumption
+      FROM Readings
+      WHERE reading_date >= @start AND reading_date <= @end
+      GROUP BY FORMAT(reading_date, 'MMM yyyy'), YEAR(reading_date), MONTH(reading_date)
+    )
     SELECT 
-      FORMAT(reading_date, 'MMM yyyy') as month,
-      SUM(consumption) as consumption,
-      40000 as target -- Static target
-    FROM Readings
-    WHERE reading_date >= @start AND reading_date <= @end
-    GROUP BY FORMAT(reading_date, 'MMM yyyy'), YEAR(reading_date), MONTH(reading_date)
-    ORDER BY YEAR(reading_date), MONTH(reading_date)
+      month_label as month,
+      consumption,
+      ISNULL(CAST(AVG(consumption) OVER () AS INT), 0) as target
+    FROM MonthlyData
+    ORDER BY y, m
     `,
     { start, end }
   );
@@ -65,14 +81,22 @@ export async function getCustomerReport(startDate?: Date, endDate?: Date) {
     target: number;
   }>(
     `
+    WITH MonthlyData AS (
+      SELECT 
+        FORMAT(created_at, 'MMM yyyy') as month_label,
+        YEAR(created_at) as y,
+        MONTH(created_at) as m,
+        COUNT(id) as customers
+      FROM Customers
+      WHERE created_at >= @start AND created_at <= @end
+      GROUP BY FORMAT(created_at, 'MMM yyyy'), YEAR(created_at), MONTH(created_at)
+    )
     SELECT 
-      FORMAT(created_at, 'MMM yyyy') as month,
-      COUNT(id) as customers,
-      20 as target
-    FROM Customers
-    WHERE created_at >= @start AND created_at <= @end
-    GROUP BY FORMAT(created_at, 'MMM yyyy'), YEAR(created_at), MONTH(created_at)
-    ORDER BY YEAR(created_at), MONTH(created_at)
+      month_label as month,
+      customers,
+      ISNULL(CAST(AVG(customers) OVER () AS INT), 0) as target
+    FROM MonthlyData
+    ORDER BY y, m
     `,
     { start, end }
   );

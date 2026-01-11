@@ -38,13 +38,14 @@ export default async function Page() {
               <DollarSign size={20} className="text-green-500" />
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${stats.todayCollection.toLocaleString()}
+              LKR {stats.todayCollection.toLocaleString()}
             </p>
             <p
-              className={`text-sm mt-1 ${stats.todayTrend >= 0
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-                }`}
+              className={`text-sm mt-1 ${
+                stats.todayTrend >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
             >
               {stats.todayTrend >= 0 ? "+" : ""}
               {stats.todayTrend}% from yesterday
@@ -59,7 +60,7 @@ export default async function Page() {
               <DollarSign size={20} className="text-blue-500" />
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${stats.monthlyCollection.toLocaleString()}
+              LKR {stats.monthlyCollection.toLocaleString()}
             </p>
             <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
               {stats.monthlyPercentage}% of target
@@ -74,7 +75,7 @@ export default async function Page() {
               <CreditCard size={20} className="text-yellow-500" />
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${stats.pendingAmount.toLocaleString()}
+              LKR {stats.pendingAmount.toLocaleString()}
             </p>
             <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
               {stats.pendingCount} transactions

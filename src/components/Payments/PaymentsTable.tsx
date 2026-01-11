@@ -42,7 +42,7 @@ export const PaymentsTable = ({ data }: { data: Payment[] }) => {
       label: "Amount",
       render: (amount: number) => (
         <span className="font-semibold text-gray-900 dark:text-white">
-          Rs. {amount.toFixed(2)}
+          LKR {amount.toFixed(2)}
         </span>
       ),
     },

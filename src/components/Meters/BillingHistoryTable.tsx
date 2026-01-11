@@ -49,13 +49,13 @@ export const BillingHistoryTable = ({
     {
       key: "base_amount",
       label: "Base Amount",
-      render: (value: number) => `$${Number(value).toFixed(2)}`,
+      render: (value: number) => `LKR ${Number(value).toFixed(2)}`,
     },
     {
       key: "total_amount",
       label: "Total Amount",
       render: (value: number) => (
-        <span className="font-semibold">${Number(value).toFixed(2)}</span>
+        <span className="font-semibold">LKR {Number(value).toFixed(2)}</span>
       ),
     },
     {
@@ -67,8 +67,8 @@ export const BillingHistoryTable = ({
             status === "paid"
               ? "success"
               : status === "overdue"
-              ? "danger"
-              : "warning"
+                ? "danger"
+                : "warning"
           }
           size="sm"
         >

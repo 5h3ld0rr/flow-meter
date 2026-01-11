@@ -35,7 +35,7 @@ export const RevenueByUtilityTable = ({ data }: RevenueByUtilityTableProps) => {
       key: "revenue",
       label: "Revenue",
       render: (value: number) => (
-        <span className="font-semibold">${value.toLocaleString()}</span>
+        <span className="font-semibold">LKR {value.toLocaleString()}</span>
       ),
     },
     {

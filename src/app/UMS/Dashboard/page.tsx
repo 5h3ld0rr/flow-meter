@@ -58,7 +58,7 @@ export default async function Page() {
         />
         <StatCard
           title="Monthly Revenue"
-          value={`Rs. ${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
+          value={`LKR ${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{
             value: stats.monthlyRevenueTrend,
@@ -68,7 +68,7 @@ export default async function Page() {
         />
         <StatCard
           title="Outstanding"
-          value={`Rs. ${(stats.outstandingAmount / 1000).toFixed(1)}K`}
+          value={`LKR ${(stats.outstandingAmount / 1000).toFixed(1)}K`}
           icon={<AlertCircle size={24} />}
           trend={{
             value: stats.outstandingTrend,
@@ -163,8 +163,8 @@ export default async function Page() {
                   <p className="font-semibold  text-gray-800 dark:text-slate-200">
                     {activity.activity_type === "payment" ||
                     activity.activity_type === "bill"
-                      ? "Rs. " + activity.amount
-                      : activity.amount ?? "\u00A0"}
+                      ? "LKR " + activity.amount
+                      : (activity.amount ?? "\u00A0")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {activity.time}

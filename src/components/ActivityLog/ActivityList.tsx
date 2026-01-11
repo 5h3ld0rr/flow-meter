@@ -44,8 +44,8 @@ export function ActivityList({ activities }: ActivityListProps) {
             value === "Payment"
               ? "success"
               : value === "Reading"
-              ? "info"
-              : "default"
+                ? "info"
+                : "default"
           }
           size="sm"
         >
@@ -92,7 +92,7 @@ export function ActivityList({ activities }: ActivityListProps) {
       render: (value: number | undefined) =>
         value ? (
           <span className="text-green-600 dark:text-green-400 font-medium">
-            +Rs. {value.toLocaleString()}
+            +LKR {value.toLocaleString()}
           </span>
         ) : (
           <span className="text-gray-400">-</span>

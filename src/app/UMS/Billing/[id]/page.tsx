@@ -152,7 +152,7 @@ export default async function Page({
                   Tariff Rate
                 </span>
                 <span className="text-gray-900 dark:text-white">
-                  Rs. {bill.tariff_rate}/unit
+                  LKR {bill.tariff_rate}/unit
                 </span>
               </div>
             </div>
@@ -163,13 +163,13 @@ export default async function Page({
                   Base Amount
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  Rs. {bill.base_amount.toFixed(2)}
+                  LKR {bill.base_amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Tax</span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  Rs. {bill.tax_amount.toFixed(2)}
+                  LKR {bill.tax_amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between pt-4 border-t-2 border-dashed border-gray-300 dark:border-gray-600">
@@ -177,7 +177,7 @@ export default async function Page({
                   Total Amount
                 </span>
                 <span className="text-2xl font-bold text-blue-600 dark:text-cyan-400">
-                  Rs. {bill.total_amount.toFixed(2)}
+                  LKR {bill.total_amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-end mt-2">

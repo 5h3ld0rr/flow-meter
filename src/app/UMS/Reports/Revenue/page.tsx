@@ -58,7 +58,7 @@ export default async function Page({
                 {
                   key: "revenue",
                   color: "#3B82F6",
-                  name: "Revenue ($)",
+                  name: "Revenue (LKR)",
                 },
               ]}
             />
