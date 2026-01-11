@@ -1,6 +1,6 @@
-import { Badge, Button, GlassCard, Input } from "@/components/ui";
+import { Badge, Button, GlassCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { Calculator, Send, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft } from "lucide-react";
 import { getBills, getTariffRate } from "@/lib/data/billing";
 import { generateBillAction } from "@/lib/actions/billing";
 import { getMeterById } from "@/lib/data/meters";
@@ -17,8 +17,6 @@ export default async function Page({
     meterId?: string;
     readingId?: string;
     currentReading?: string;
-    startDate?: string;
-    endDate?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -32,8 +30,8 @@ export default async function Page({
     meterId: params.meterId || "",
     previousReading: 0,
     currentReading: parseFloat(params.currentReading || "0"),
-    startDate: params.startDate || "",
-    endDate: params.endDate || "",
+    startDate: "",
+    endDate: "",
     readingId: params.readingId,
     consumption: 0,
     tariffRate: 0,
@@ -66,9 +64,25 @@ export default async function Page({
         billingSummary.currentReading = latest.reading_value;
       }
 
+      const formatDate = (date: Date | null | undefined) => {
+        if (!date) return "";
+        return new Date(date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      };
+
+      if (previous?.reading_date) {
+        billingSummary.startDate = formatDate(previous.reading_date);
+      }
+      if (latest?.reading_date) {
+        billingSummary.endDate = formatDate(latest.reading_date);
+      }
+
       billingSummary.tariffRate = await getTariffRate(meter.utility_type);
 
-      if (stepNumber > 2) {
+      if (stepNumber >= 2) {
         billingSummary.consumption =
           billingSummary.currentReading - billingSummary.previousReading;
         if (billingSummary.consumption < 0) billingSummary.consumption = 0;
@@ -82,7 +96,7 @@ export default async function Page({
       billingSummary.error = "Meter not found";
     }
   }
-  const STEPS = ["Select Customer", "Calculate", "Generate"];
+  const STEPS = ["Select Customer", "Generate"];
 
   return (
     <>
@@ -147,88 +161,6 @@ export default async function Page({
           )}
 
           {stepNumber === 2 && (
-            <form action="/UMS/Billing" method="GET">
-              <input type="hidden" name="step" value="3" />
-              <input
-                type="hidden"
-                name="customerId"
-                value={billingSummary.customerId}
-              />
-              <input
-                type="hidden"
-                name="meterId"
-                value={billingSummary.meterId}
-              />
-              <input
-                type="hidden"
-                name="startDate"
-                value={billingSummary.startDate}
-              />
-              <input
-                type="hidden"
-                name="endDate"
-                value={billingSummary.endDate}
-              />
-              <input
-                type="hidden"
-                name="readingId"
-                value={billingSummary.readingId}
-              />
-
-              <div className="space-y-4">
-                {billingSummary.error && (
-                  <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
-                    {billingSummary.error}
-                  </div>
-                )}
-
-                <Input
-                  label="Previous Reading"
-                  type="number"
-                  value={billingSummary.previousReading}
-                  readOnly
-                />
-                <Input
-                  name="currentReading"
-                  label="Current Reading"
-                  type="number"
-                  value={billingSummary.currentReading}
-                  readOnly
-                />
-                <div className="glass rounded-lg p-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Tariff Rate
-                    </span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      Rs. {billingSummary.tariffRate}/unit
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
-                  <Button
-                    variant="secondary"
-                    href={`/UMS/Billing?step=1&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}`}
-                    fullWidth
-                    icon={<ArrowLeft size={18} />}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    fullWidth
-                    icon={<Calculator size={18} />}
-                    disabled={!!billingSummary.error}
-                  >
-                    Calculate
-                  </Button>
-                </div>
-              </div>
-            </form>
-          )}
-
-          {stepNumber === 3 && (
             <form action={generateBillAction} className="space-y-4">
               <input
                 type="hidden"
@@ -297,7 +229,7 @@ export default async function Page({
                     Billing Period
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    {billingSummary.startDate} to {billingSummary.endDate}
+                    {billingSummary.startDate} - {billingSummary.endDate}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -336,7 +268,7 @@ export default async function Page({
               <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
                 <Button
                   variant="secondary"
-                  href={`/UMS/Billing?step=2&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}&startDate=${billingSummary.startDate}&endDate=${billingSummary.endDate}&readingId=${billingSummary.readingId}`}
+                  href={`/UMS/Billing?step=1&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}&readingId=${billingSummary.readingId}`}
                   fullWidth
                 >
                   <ArrowLeft size={18} />
