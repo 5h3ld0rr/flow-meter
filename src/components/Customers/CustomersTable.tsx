@@ -13,12 +13,23 @@ import { UTILITIES } from "@/constants";
 import { cn } from "@/lib/utils";
 import { Building2, Edit, Eye, Home, Landmark, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const columns = [
   {
     key: "customer_id",
     label: "Customer ID",
-    render: (id: string) => <span className="font-mono">{id}</span>,
+    render: (id: string) => (
+      <span
+        className="font-mono cursor-copy"
+        onClick={async () => {
+          await navigator.clipboard.writeText(id);
+          toast.success("Copied to clipboard");
+        }}
+      >
+        {id}
+      </span>
+    ),
   },
   {
     key: "name",
