@@ -82,7 +82,7 @@ BEGIN
     
     INSERT INTO Activities (activity_type, description, customer_id, amount, created_at)
     SELECT 
-        'billing',
+        'bill',
         'New bill generated: ' + i.bill_id,
         i.customer_id,
         i.total_amount,
