@@ -8,7 +8,6 @@ import {
   Users,
   AlertTriangle,
   Filter,
-  X,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -42,11 +41,16 @@ export const ActionBar = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") || ""
-  );
-  const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
+  const paramStartDate = searchParams.get("startDate");
+  const paramEndDate = searchParams.get("endDate");
+
+  const [startDate, setStartDate] = useState(paramStartDate || "");
+  const [endDate, setEndDate] = useState(paramEndDate || "");
   const [open, setOpen] = useState(false);
+
+  const activeFiltersCount = [paramStartDate, paramEndDate].filter(
+    Boolean
+  ).length;
 
   // Determine report type from pathname
   const getReportType = ():
@@ -83,8 +87,6 @@ export const ActionBar = () => {
     setOpen(false);
   };
 
-  const activeFiltersCount = [startDate, endDate].filter(Boolean).length;
-
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
       <div className="flex space-x-2 glass rounded-xl px-1">
@@ -100,15 +102,56 @@ export const ActionBar = () => {
         ))}
       </div>
       <div className="flex gap-2">
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+          open={open}
+          onOpenChange={(isOpen) => {
+            setOpen(isOpen);
+            if (isOpen) {
+              // Reset inputs to match URL when opening
+              setStartDate(paramStartDate || "");
+              setEndDate(paramEndDate || "");
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button variant={activeFiltersCount > 0 ? "primary" : "secondary"}>
               <Filter size={18} />
-              Filters
-              {activeFiltersCount > 0 && (
-                <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">
-                  {activeFiltersCount}
+              {activeFiltersCount > 0 ? (
+                <span>
+                  {paramStartDate && paramEndDate
+                    ? `${new Date(paramStartDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })} - ${new Date(paramEndDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}`
+                    : paramStartDate
+                    ? `From ${new Date(paramStartDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}`
+                    : paramEndDate
+                    ? `Until ${new Date(paramEndDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}`
+                    : "Filters"}
                 </span>
+              ) : (
+                "Filters"
               )}
             </Button>
           </PopoverTrigger>

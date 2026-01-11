@@ -3,10 +3,11 @@ import { query } from "@/lib/db";
 // Data Layer - READ operations for pages
 
 export async function getRevenueReport(startDate?: Date, endDate?: Date) {
-  // Default to last 6 months if not provided
+  // Default to last 10 years if not provided
   const end = endDate || new Date();
   const start =
-    startDate || new Date(new Date().setMonth(new Date().getMonth() - 6));
+    startDate ||
+    new Date(new Date().setFullYear(new Date().getFullYear() - 10));
 
   const result = await query<{
     month: string;

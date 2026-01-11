@@ -23,7 +23,7 @@ export default async function Page({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Revenue Trend (Last 6 Months)
+            Revenue Trend
           </h3>
           <div className="h-64">
             <AreaChart
