@@ -2,7 +2,7 @@
 
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { getBillForPayment, getPaymentCount } from "@/lib/data/payments";
+import { getBillForPayment } from "@/lib/data/payments";
 
 /**
  * Records a payment with parameterized SQL queries
@@ -46,21 +46,20 @@ export const recordPayment = async (
     const billIntId = billResult.recordset[0].id;
     const customerIntId = billResult.recordset[0].customer_id;
 
-    const paymentCount = await getPaymentCount();
-    const paymentId = `PAY${String(paymentCount + 1).padStart(3, "0")}`;
-
-    // REFACTORED: Simple INSERT with parameterized query
-    await query(
+    // Insert payment and get ID in same batch (works with triggers)
+    const paymentResult = await query<{ id: number; payment_id: string }>(
       `INSERT INTO Payments (
-        payment_id, bill_id, customer_id, amount, payment_method,
+        bill_id, customer_id, amount, payment_method,
         transaction_reference, payment_date, status, notes, created_by
       )
       VALUES (
-        @paymentId, @billId, @customerId, @amount, @paymentMethod,
+        @billId, @customerId, @amount, @paymentMethod,
         @transactionRef, @paymentDate, 'completed', @notes, @userId
-      )`,
+      );
+      
+      DECLARE @insertedId INT = CAST(SCOPE_IDENTITY() AS INT);
+      SELECT @insertedId as id, payment_id FROM Payments WHERE id = @insertedId;`,
       {
-        paymentId,
         billId: billIntId,
         customerId: customerIntId,
         amount: data.amount,
@@ -71,6 +70,8 @@ export const recordPayment = async (
         userId,
       }
     );
+
+    const paymentId = paymentResult.recordset[0].payment_id;
 
     // REFACTORED: Simple UPDATE with parameterized query
     await query(

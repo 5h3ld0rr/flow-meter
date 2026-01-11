@@ -5,6 +5,7 @@ import {
   getRevenueByUtilityType,
 } from "@/lib/data/reports";
 import { AIAnalysisPanel } from "@/components/Reports";
+import { ConsumptionByUtilityTable } from "@/components/Reports/ConsumptionByUtilityTable";
 
 export default async function Page({
   searchParams,
@@ -73,49 +74,7 @@ export default async function Page({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Detailed Utility Consumption Analysis
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Utility Type
-                </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Active Meters
-                </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Consumption (kWh)
-                </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Avg per Meter
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {utilityData.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                >
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium capitalize">
-                    {row.utility_type}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-center text-gray-600 dark:text-gray-400">
-                    {row.customers}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white font-semibold">
-                    {row.consumption.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400">
-                    {row.customers > 0
-                      ? (row.consumption / row.customers).toFixed(2)
-                      : "0.00"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ConsumptionByUtilityTable data={utilityData} />
       </GlassCard>
 
       {/* AI Analysis Panel */}

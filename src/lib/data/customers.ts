@@ -44,6 +44,18 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
   return result.recordset[0] || null;
 }
 
+export async function getCustomerByInternalId(
+  id: number
+): Promise<Customer | null> {
+  const result = await query<Customer>(
+    `SELECT id, customer_id, name, email, phone, address, status, type, balance, created_at, updated_at
+     FROM Customers
+     WHERE id = @id`,
+    { id }
+  );
+  return result.recordset[0] || null;
+}
+
 export async function checkEmailExists(email: string): Promise<boolean> {
   const result = await query<{ count: number }>(
     `SELECT COUNT(*) as count FROM Customers WHERE email = @email`,

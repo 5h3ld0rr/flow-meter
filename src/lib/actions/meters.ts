@@ -3,11 +3,7 @@
 import { query } from "@/lib/db";
 import { createMeterSchema, updateMeterSchema } from "@/lib/schemas/meter";
 import { redirect } from "next/navigation";
-import {
-  checkSerialNumberExists,
-  getMeterCount,
-  getMeterById,
-} from "@/lib/data/meters";
+import { checkSerialNumberExists, getMeterById } from "@/lib/data/meters";
 
 export const createMeter = async (prevState: unknown, formData: FormData) => {
   const rawData = {
@@ -38,9 +34,6 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
       return { success: false, error: "Serial number already exists" };
     }
 
-    const meterCount = await getMeterCount();
-    const meterId = `M${String(meterCount + 1).padStart(3, "0")}`;
-
     const customerResult = await query<{ id: number; address: string }>(
       "SELECT id, address FROM Customers WHERE customer_id = @customerId",
       { customerId: data.customer_id }
@@ -53,11 +46,11 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
     const custIntId = customerResult.recordset[0].id;
     const customerAddress = customerResult.recordset[0].address;
 
+    // Insert meter without meter_id (it's a computed column)
     await query(
-      `INSERT INTO Meters (meter_id, serial_number, customer_id, utility_type, location, install_date, status)
-       VALUES (@meterId, @serialNumber, @customerId, @utilityType, @location, @installDate, 'active')`,
+      `INSERT INTO Meters (serial_number, customer_id, utility_type, location, install_date, status)
+       VALUES (@serialNumber, @customerId, @utilityType, @location, @installDate, 'active')`,
       {
-        meterId,
         serialNumber: data.serial_number,
         customerId: custIntId,
         utilityType: data.utility_type,
@@ -65,12 +58,13 @@ export const createMeter = async (prevState: unknown, formData: FormData) => {
         installDate: data.install_date,
       }
     );
-
-    redirect("/UMS/Meters");
   } catch (error) {
     console.error("Error creating meter:", error);
     return { success: false, error: "Failed to create meter" };
   }
+
+  // Redirect outside try-catch to allow Next.js redirect to work properly
+  redirect("/UMS/Meters");
 };
 
 export const updateMeter = async (prevState: unknown, formData: FormData) => {

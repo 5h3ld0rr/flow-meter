@@ -64,4 +64,4 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
       )}
     </div>
   );
-}
+};

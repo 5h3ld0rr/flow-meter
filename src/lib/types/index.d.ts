@@ -64,6 +64,7 @@ declare global {
   }
 
   interface Bill {
+    id: number;
     bill_id: string;
     customer_id: number;
     meter_id: number;

@@ -41,7 +41,14 @@ export async function getBills(filters?: {
 }
 
 export async function getBillById(id: number) {
-  const result = await query<Bill>(
+  const result = await query<
+    Bill & {
+      customer_display_id: string;
+      customer_name: string;
+      meter_display_id: string;
+      meter_serial: string;
+    }
+  >(
     `SELECT b.*, c.customer_id as customer_display_id, c.name as customer_name,
             m.meter_id as meter_display_id, m.serial_number as meter_serial
      FROM Bills b
@@ -49,6 +56,26 @@ export async function getBillById(id: number) {
      INNER JOIN Meters m ON b.meter_id = m.id
      WHERE b.id = @id`,
     { id }
+  );
+  return result.recordset[0] || null;
+}
+
+export async function getBillByBillId(billId: string) {
+  const result = await query<
+    Bill & {
+      customer_display_id: string;
+      customer_name: string;
+      meter_display_id: string;
+      meter_serial: string;
+    }
+  >(
+    `SELECT b.*, c.customer_id as customer_display_id, c.name as customer_name,
+            m.meter_id as meter_display_id, m.serial_number as meter_serial
+     FROM Bills b
+     INNER JOIN Customers c ON b.customer_id = c.id
+     INNER JOIN Meters m ON b.meter_id = m.id
+     WHERE b.bill_id = @billId`,
+    { billId }
   );
   return result.recordset[0] || null;
 }
@@ -64,16 +91,19 @@ export async function getMeterUtilityType(meterId: number) {
 export async function getTariffRate(
   utilityType: string,
   customerType: string = "household"
-): Promise<number> {
-  const result = await query<{ rate_per_unit: number }>(
-    `SELECT TOP 1 rate_per_unit 
+): Promise<{ rate: number; taxPercentage: number }> {
+  const result = await query<{ rate_per_unit: number; tax_percentage: number }>(
+    `SELECT TOP 1 rate_per_unit, tax_percentage
      FROM Tariffs 
      WHERE utility_type = @utilityType 
        AND customer_type = @customerType
      ORDER BY effective_from DESC`,
     { utilityType, customerType }
   );
-  return result.recordset[0]?.rate_per_unit || 0.15;
+  return {
+    rate: result.recordset[0]?.rate_per_unit || 0.15,
+    taxPercentage: result.recordset[0]?.tax_percentage || 10.0,
+  };
 }
 
 export async function getBillCount() {
@@ -94,8 +124,8 @@ export async function addTariffRate(
   customerType: string = "household"
 ) {
   // Check if current rate is different to avoid spamming
-  const currentRate = await getTariffRate(utilityType, customerType);
-  if (currentRate === rate) return; // No change needed
+  const currentTariff = await getTariffRate(utilityType, customerType);
+  if (currentTariff.rate === rate) return; // No change needed
 
   await query(
     `INSERT INTO Tariffs (utility_type, customer_type, rate_per_unit, effective_from)
@@ -118,16 +148,21 @@ export async function createBill(data: {
   taxAmount: number;
   dueDate: Date | string;
 }) {
-  await query(
+  // Insert the bill and get ID in same batch (works with triggers)
+  const result = await query<{ id: number; bill_id: string }>(
     `INSERT INTO Bills (
       customer_id, meter_id, reading_id, billing_period_start, billing_period_end,
       previous_reading, current_reading, consumption, tariff_rate,
       base_amount, tax_amount, due_date, status
-    ) VALUES (
+    ) 
+    VALUES (
       @customerId, @meterId, @readingId, @billingPeriodStart, @billingPeriodEnd,
       @previousReading, @currentReading, @consumption, @tariffRate,
       @baseAmount, @taxAmount, @dueDate, 'generated'
-    )`,
+    );
+    
+    DECLARE @insertedId INT = CAST(SCOPE_IDENTITY() AS INT);
+    SELECT @insertedId as id, bill_id FROM Bills WHERE id = @insertedId;`,
     {
       customerId: data.customerId,
       meterId: data.meterId,
@@ -143,4 +178,6 @@ export async function createBill(data: {
       dueDate: data.dueDate,
     }
   );
+
+  return result.recordset[0];
 }

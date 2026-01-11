@@ -3,12 +3,15 @@
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
-interface Column {
+export interface Column {
   key: string;
   label: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (data: any, row?: any) => ReactNode;
+  align?: "left" | "center" | "right";
 }
-interface TableProps {
+
+export interface TableProps {
   columns: Column[];
   data: unknown[];
   onRowClick?: (row: unknown) => void;
@@ -29,7 +32,10 @@ export const Table = ({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
+                  className={cn(
+                    "px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300",
+                    column.align ? `text-${column.align}` : "text-left"
+                  )}
                 >
                   {column.label}
                 </th>
@@ -54,7 +60,10 @@ export const Table = ({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400"
+                    className={cn(
+                      "px-6 py-4 text-sm text-gray-600 dark:text-gray-400",
+                      column.align ? `text-${column.align}` : "text-left"
+                    )}
                   >
                     {column.render
                       ? column.render(row[column.key], row)
@@ -73,4 +82,4 @@ export const Table = ({
       )}
     </div>
   );
-}
+};

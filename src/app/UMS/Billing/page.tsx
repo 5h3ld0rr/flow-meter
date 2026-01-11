@@ -1,12 +1,12 @@
-import { Badge, Button, GlassCard } from "@/components/ui";
+import { Badge, GlassCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { Send, ArrowLeft } from "lucide-react";
 import { getBills, getTariffRate } from "@/lib/data/billing";
-import { generateBillAction } from "@/lib/actions/billing";
 import { getMeterById } from "@/lib/data/meters";
 import { getReadings } from "@/lib/data/readings";
 import { Header } from "@/components/layout";
 import { BillingStepOne } from "@/components/Billing/BillingStepOne";
+import { BillingForm } from "@/components/Billing/BillingForm";
+import { BillsTable } from "@/components/Billing/BillsTable";
 
 export default async function Page({
   searchParams,
@@ -35,6 +35,7 @@ export default async function Page({
     readingId: params.readingId,
     consumption: 0,
     tariffRate: 0,
+    taxPercentage: 0,
     amount: 0,
     tax: 0,
     total: 0,
@@ -42,6 +43,7 @@ export default async function Page({
     internalMeterId: 0,
     internalCustomerId: 0,
     error: "",
+    utilityType: "",
   };
 
   if (stepNumber > 1 && params.meterId) {
@@ -52,6 +54,7 @@ export default async function Page({
       billingSummary.customerId = meter.customer_display_id;
       billingSummary.internalCustomerId = meter.customer_id;
       billingSummary.internalMeterId = meter.id;
+      billingSummary.utilityType = meter.utility_type;
 
       const latestReadings = await getReadings({ meterId: params.meterId }, 2);
 
@@ -73,14 +76,24 @@ export default async function Page({
         });
       };
 
-      if (previous?.reading_date) {
+      // If there are only 2 readings, the first is the initial reading
+      // Use install date as the billing period start
+      if (latestReadings.length <= 2 && meter.install_date) {
+        billingSummary.startDate = formatDate(meter.install_date);
+      } else if (previous?.reading_date) {
         billingSummary.startDate = formatDate(previous.reading_date);
+      } else if (meter.install_date) {
+        // Fallback to install date if no previous reading
+        billingSummary.startDate = formatDate(meter.install_date);
       }
+
       if (latest?.reading_date) {
         billingSummary.endDate = formatDate(latest.reading_date);
       }
 
-      billingSummary.tariffRate = await getTariffRate(meter.utility_type);
+      const tariffData = await getTariffRate(meter.utility_type);
+      billingSummary.tariffRate = tariffData.rate;
+      billingSummary.taxPercentage = tariffData.taxPercentage;
 
       if (stepNumber >= 2) {
         billingSummary.consumption =
@@ -89,7 +102,8 @@ export default async function Page({
 
         billingSummary.amount =
           billingSummary.consumption * billingSummary.tariffRate;
-        billingSummary.tax = billingSummary.amount * 0.1;
+        billingSummary.tax =
+          billingSummary.amount * (billingSummary.taxPercentage / 100);
         billingSummary.total = billingSummary.amount + billingSummary.tax;
       }
     } else {
@@ -105,6 +119,7 @@ export default async function Page({
         subtitle="Generate and manage utility bills"
       />
 
+      {/* Wizard Steps */}
       {/* Wizard Steps */}
       <GlassCard className="p-12 mb-6 pt-6">
         <div className="flex items-center justify-between">
@@ -158,127 +173,7 @@ export default async function Page({
             />
           )}
 
-          {stepNumber === 2 && (
-            <form action={generateBillAction} className="space-y-4">
-              <input
-                type="hidden"
-                name="customerId"
-                value={billingSummary.internalCustomerId}
-              />
-              <input
-                type="hidden"
-                name="meterId"
-                value={billingSummary.internalMeterId}
-              />
-              <input
-                type="hidden"
-                name="readingId"
-                value={billingSummary.readingId}
-              />
-              <input
-                type="hidden"
-                name="startDate"
-                value={billingSummary.startDate}
-              />
-              <input
-                type="hidden"
-                name="endDate"
-                value={billingSummary.endDate}
-              />
-              <input
-                type="hidden"
-                name="previousReading"
-                value={billingSummary.previousReading}
-              />
-              <input
-                type="hidden"
-                name="currentReading"
-                value={billingSummary.currentReading}
-              />
-              <input
-                type="hidden"
-                name="consumption"
-                value={billingSummary.consumption}
-              />
-              <input
-                type="hidden"
-                name="tariffRate"
-                value={billingSummary.tariffRate}
-              />
-              <input
-                type="hidden"
-                name="baseAmount"
-                value={billingSummary.amount}
-              />
-              <input
-                type="hidden"
-                name="taxAmount"
-                value={billingSummary.tax}
-              />
-              <input
-                type="hidden"
-                name="totalAmount"
-                value={billingSummary.total}
-              />
-
-              <div className="glass rounded-lg p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Billing Period
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {billingSummary.startDate} - {billingSummary.endDate}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Consumption
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {billingSummary.consumption.toFixed(2)} units
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Base Amount
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    Rs. {billingSummary.amount.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Tax (10%)
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    Rs. {billingSummary.tax.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    Total Amount
-                  </span>
-                  <span className="text-xl font-bold text-blue-600 dark:text-cyan-400">
-                    Rs. {billingSummary.total.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
-                <Button
-                  variant="secondary"
-                  href={`/UMS/Billing?step=1&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}&readingId=${billingSummary.readingId}`}
-                  fullWidth
-                >
-                  <ArrowLeft size={18} />
-                  Back
-                </Button>
-                <Button type="submit" variant="primary" fullWidth>
-                  <Send size={18} />
-                  Generate Bill
-                </Button>
-              </div>
-            </form>
-          )}
+          {stepNumber === 2 && <BillingForm billingSummary={billingSummary} />}
         </GlassCard>
 
         {/* Bill Preview */}
@@ -378,11 +273,6 @@ export default async function Page({
                 </div>
               </div>
             </div>
-
-            {/* <Button variant="secondary" fullWidth>
-              <FileText size={18} className="mr-2" />
-              Download PDF
-            </Button> */}
           </div>
         </GlassCard>
       </div>
@@ -390,74 +280,9 @@ export default async function Page({
       {/* Recent Bills Section */}
       <GlassCard className="p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-          Recent Bills
+          Billing History
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Bill ID
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Customer
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Amount
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {bills.map((bill) => (
-                <tr
-                  key={bill.bill_id}
-                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                >
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                    {bill.bill_id}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {bill.customer_name}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {new Date(bill.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
-                    Rs. {bill.total_amount}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge
-                      variant={
-                        bill.status === "paid"
-                          ? "success"
-                          : bill.status === "overdue"
-                          ? "danger"
-                          : "warning"
-                      }
-                      size="sm"
-                    >
-                      {bill.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <BillsTable bills={bills} />
       </GlassCard>
     </>
   );

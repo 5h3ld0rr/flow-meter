@@ -7,6 +7,8 @@ import { notFound } from "next/navigation";
 import { MapPin, Calendar, Activity, Plus } from "lucide-react";
 import { UTILITIES } from "@/constants";
 import { cn } from "@/lib/utils";
+import { ReadingHistoryTable } from "@/components/Meters/ReadingHistoryTable";
+import { BillingHistoryTable } from "@/components/Meters/BillingHistoryTable";
 
 export default async function Page({
   params,
@@ -217,54 +219,12 @@ export default async function Page({
             Add Reading
           </Button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Date
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Reading Value
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Consumption
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Notes
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {readings.slice(0, 10).map((reading) => (
-                <tr
-                  key={reading.id}
-                  className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                    {new Date(reading.reading_date).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                    {Number(reading.reading_value).toLocaleString()}{" "}
-                    {utilityConfig.unit}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                    {Number(reading.consumption).toLocaleString()}{" "}
-                    {utilityConfig.unit}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                    {reading.notes || "-"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {readings.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No readings found for this meter
-            </p>
-          )}
-        </div>
+        <ReadingHistoryTable readings={readings} unit={utilityConfig.unit} />
+        {readings.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            No readings found for this meter
+          </p>
+        )}
       </GlassCard>
 
       {/* Billing History */}
@@ -272,77 +232,12 @@ export default async function Page({
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Billing History
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Bill ID
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Period
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Consumption
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Base Amount
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Total Amount
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {bills.slice(0, 10).map((bill) => (
-                <tr
-                  key={bill.bill_id}
-                  className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
-                  <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                    {bill.bill_id}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                    {new Date(bill.billing_period_start).toLocaleDateString()} -{" "}
-                    {new Date(bill.billing_period_end).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                    {Number(bill.consumption).toLocaleString()}{" "}
-                    {utilityConfig.unit}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                    ${Number(bill.base_amount).toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                    ${Number(bill.total_amount).toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge
-                      variant={
-                        bill.status === "paid"
-                          ? "success"
-                          : bill.status === "overdue"
-                          ? "danger"
-                          : "warning"
-                      }
-                      size="sm"
-                    >
-                      {bill.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {bills.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No bills found for this meter
-            </p>
-          )}
-        </div>
+        <BillingHistoryTable bills={bills} unit={utilityConfig.unit} />
+        {bills.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            No bills found for this meter
+          </p>
+        )}
       </GlassCard>
     </>
   );

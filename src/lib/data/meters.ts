@@ -89,3 +89,27 @@ export async function getMeterLastReading(meterId: string) {
 
   return result.recordset[0];
 }
+export async function getMeterByInternalId(id: number) {
+  const result = await query<
+    Meter & {
+      customer_display_id: string;
+      customer_name: string;
+      customer_email: string;
+      last_reading_value: number | null;
+      last_reading_date: Date | null;
+    }
+  >(
+    `SELECT 
+        m.*,
+        c.customer_id as customer_display_id,
+        c.name as customer_name,
+        c.email as customer_email,
+        (SELECT TOP 1 r.reading_value FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_value,
+        (SELECT TOP 1 r.reading_date FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_date
+    FROM Meters m
+    INNER JOIN Customers c ON m.customer_id = c.id
+    WHERE m.id = @id`,
+    { id }
+  );
+  return result.recordset[0] || null;
+}

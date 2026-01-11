@@ -1,10 +1,11 @@
 "use server";
 
-import { getCustomerById } from "@/lib/data/customers";
-import { getMeters } from "@/lib/data/meters";
-import { addTariffRate } from "@/lib/data/billing";
+import { getCustomerById, getCustomerByInternalId } from "@/lib/data/customers";
+import { getMeters, getMeterByInternalId } from "@/lib/data/meters";
+import { addTariffRate, createBill, getBillByBillId } from "@/lib/data/billing";
 import { getReadings } from "@/lib/data/readings";
 import { revalidatePath } from "next/cache";
+import { sendBillEmail } from "@/lib/utils/email";
 
 export async function updateTariffRates(
   prevState: { success: boolean; message: string } | undefined | null,
@@ -77,42 +78,119 @@ export async function validateCustomerAndGetMeters(customerId: string) {
   }
 }
 
-import { createBill } from "@/lib/data/billing";
-import { redirect } from "next/navigation";
+export async function generateBillAction(
+  prevState: {
+    success: boolean;
+    message: string;
+    bill?: {
+      id: number;
+      billId: string;
+      customerName?: string;
+      amount: number;
+      dueDate: string;
+    };
+  } | null,
+  formData: FormData
+) {
+  try {
+    const customerId = parseInt(formData.get("customerId") as string);
+    const meterId = parseInt(formData.get("meterId") as string);
+    const readingId = formData.get("readingId")
+      ? parseInt(formData.get("readingId") as string)
+      : undefined;
+    const startDate = formData.get("startDate") as string;
+    const endDate = formData.get("endDate") as string;
+    const consumption = parseFloat(formData.get("consumption") as string);
+    const baseAmount = parseFloat(formData.get("baseAmount") as string);
+    const taxAmount = parseFloat(formData.get("taxAmount") as string);
+    const currentReading = parseFloat(formData.get("currentReading") as string);
+    const previousReading = parseFloat(
+      formData.get("previousReading") as string
+    );
+    const tariffRate = parseFloat(formData.get("tariffRate") as string);
+    const totalAmount = parseFloat(formData.get("totalAmount") as string);
 
-export async function generateBillAction(formData: FormData) {
-  const customerId = parseInt(formData.get("customerId") as string);
-  const meterId = parseInt(formData.get("meterId") as string);
-  const readingId = formData.get("readingId")
-    ? parseInt(formData.get("readingId") as string)
-    : undefined;
-  const startDate = formData.get("startDate") as string;
-  const endDate = formData.get("endDate") as string;
-  const consumption = parseFloat(formData.get("consumption") as string);
-  const baseAmount = parseFloat(formData.get("baseAmount") as string);
-  const taxAmount = parseFloat(formData.get("taxAmount") as string);
-  const currentReading = parseFloat(formData.get("currentReading") as string);
-  const previousReading = parseFloat(formData.get("previousReading") as string);
-  const tariffRate = parseFloat(formData.get("tariffRate") as string);
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 15); // Due in 15 days
 
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 15); // Due in 15 days
+    // Create Bill
+    const newBill = await createBill({
+      customerId,
+      meterId,
+      readingId,
+      billingPeriodStart: startDate,
+      billingPeriodEnd: endDate,
+      previousReading,
+      currentReading,
+      consumption,
+      tariffRate,
+      baseAmount,
+      taxAmount,
+      dueDate,
+    });
 
-  await createBill({
-    customerId,
-    meterId,
-    readingId,
-    billingPeriodStart: startDate,
-    billingPeriodEnd: endDate,
-    previousReading,
-    currentReading,
-    consumption,
-    tariffRate,
-    baseAmount,
-    taxAmount,
-    dueDate,
-  });
+    // Fetch Customer Email
+    const customer = await getCustomerByInternalId(customerId);
+    const meter = await getMeterByInternalId(meterId);
 
-  revalidatePath("/UMS/Billing");
-  redirect("/UMS/Billing");
+    if (customer && customer.email) {
+      await sendBillEmail(customer.email, {
+        billId: newBill.bill_id,
+        amount: totalAmount,
+        dueDate: dueDate.toLocaleDateString(),
+        customerName: customer.name,
+        billingPeriodStart: startDate,
+        billingPeriodEnd: endDate,
+        consumption,
+        tariffRate,
+        baseAmount,
+        taxAmount,
+        utilityType: meter?.utility_type,
+      });
+    }
+
+    revalidatePath("/UMS/Billing");
+
+    return {
+      success: true,
+      message: "Bill generated and sent successfully",
+      bill: {
+        id: newBill.id,
+        billId: newBill.bill_id,
+        customerName: customer?.name,
+        customerId: customer?.customer_id,
+        billingPeriodStart: startDate,
+        billingPeriodEnd: endDate,
+        previousReading: previousReading,
+        currentReading: currentReading,
+        consumption: consumption,
+        tariffRate: tariffRate,
+        baseAmount: baseAmount,
+        taxAmount: taxAmount,
+        amount: totalAmount,
+        dueDate: dueDate.toLocaleDateString(),
+      },
+    };
+  } catch (error) {
+    console.error("Bill generation error:", error);
+    return { success: false, message: "Failed to generate bill" };
+  }
+}
+
+export async function getBillByBillIdAction(billId: string) {
+  try {
+    const bill = await getBillByBillId(billId);
+
+    if (!bill) {
+      return { success: false, error: "Bill not found" };
+    }
+
+    return {
+      success: true,
+      bill,
+    };
+  } catch (error) {
+    console.error("Error fetching bill:", error);
+    return { success: false, error: "Failed to fetch bill details" };
+  }
 }
