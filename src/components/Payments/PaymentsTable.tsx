@@ -1,12 +1,23 @@
 "use client";
 
-import { Badge, Table } from "@/components/ui";
+import { Badge, Table, toast } from "@/components/ui";
 
 export const PaymentsTable = ({ data }: { data: Payment[] }) => {
   const columns = [
     {
       key: "payment_id",
       label: "Payment ID",
+      render: (paymentId: string) => (
+        <span
+          className="cursor-pointer"
+          onClick={async () => {
+            await navigator.clipboard.writeText(paymentId);
+            toast("success", "Payment ID copied to clipboard");
+          }}
+        >
+          {paymentId}
+        </span>
+      ),
     },
     {
       key: "payment_date",
@@ -31,7 +42,7 @@ export const PaymentsTable = ({ data }: { data: Payment[] }) => {
       label: "Amount",
       render: (amount: number) => (
         <span className="font-semibold text-gray-900 dark:text-white">
-          ${amount.toFixed(2)}
+          Rs. {amount.toFixed(2)}
         </span>
       ),
     },
@@ -53,4 +64,4 @@ export const PaymentsTable = ({ data }: { data: Payment[] }) => {
   ];
 
   return <Table columns={columns} data={data} />;
-}
+};
