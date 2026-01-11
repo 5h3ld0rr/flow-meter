@@ -57,7 +57,7 @@ export default async function Page() {
           color="green"
         />
         <StatCard
-          title="Total Revenue"
+          title="Monthly Revenue"
           value={`LKR ${(stats.totalRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{

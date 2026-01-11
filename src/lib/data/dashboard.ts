@@ -6,25 +6,65 @@ import { UTILITIES } from "@/constants";
 export async function getDashboardStats() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  const [
-    customersRes,
-    metersRes,
-    revenueRes,
-    outstandingRes,
-    consumptionRes,
-    defaultersRes,
-  ] = await Promise.all([
+  /*
+    Indices:
+    0: customersTotal
+    1: customersPrevTotal
+    2: metersActive
+    3: revenueCurr
+    4: revenuePrev
+    5: outstandingSnapshot
+    6: outstandingNewCurr
+    7: outstandingNewPrev
+    8: consumptionCurrBreakdown
+    9: consumptionPrevTotal
+    10: defaultersSnapshot
+    11: defaultersNewCurr
+    12: defaultersNewPrev
+  */
+  const results = await Promise.all([
+    // 0: Customers (Total)
     query<{ count: number }>("SELECT COUNT(*) as count FROM Customers"),
+    // 1: Customers (Total as of start of this month)
+    query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM Customers WHERE created_at < @start",
+      { start: startOfMonth }
+    ),
+
+    // 2: Active Meters
     query<{ count: number }>(
       "SELECT COUNT(*) as count FROM Meters WHERE status = 'active'"
     ),
+
+    // 3: Revenue (Current Month)
     query<{ total: number }>(
-      "SELECT ISNULL(SUM(amount), 0) as total FROM Payments"
+      "SELECT ISNULL(SUM(amount), 0) as total FROM Payments WHERE payment_date >= @start",
+      { start: startOfMonth }
     ),
+    // 4: Revenue (Previous Month)
+    query<{ total: number }>(
+      "SELECT ISNULL(SUM(amount), 0) as total FROM Payments WHERE payment_date >= @start AND payment_date < @end",
+      { start: startOfLastMonth, end: startOfMonth }
+    ),
+
+    // 5: Outstanding (Current snapshot)
     query<{ total: number }>(
       "SELECT ISNULL(SUM(balance), 0) as total FROM Customers WHERE balance > 0"
     ),
+    // 6: Outstanding Trend Proxy (New Overdue Debt this month)
+    query<{ total: number }>(
+      "SELECT ISNULL(SUM(total_amount), 0) as total FROM Bills WHERE status = 'overdue' AND due_date >= @start",
+      { start: startOfMonth }
+    ),
+    // 7: Outstanding Trend Proxy (New Overdue Debt last month)
+    query<{ total: number }>(
+      "SELECT ISNULL(SUM(total_amount), 0) as total FROM Bills WHERE status = 'overdue' AND due_date >= @start AND due_date < @end",
+      { start: startOfLastMonth, end: startOfMonth }
+    ),
+
+    // 8: Consumption (Current Month Breakdown)
     query<{ utility_type: string; total: number }>(
       `SELECT m.utility_type, ISNULL(SUM(r.consumption), 0) as total
        FROM Readings r
@@ -33,7 +73,24 @@ export async function getDashboardStats() {
        GROUP BY m.utility_type`,
       { start: startOfMonth }
     ),
+    // 9: Consumption (Previous Month Total)
+    query<{ total: number }>(
+      "SELECT ISNULL(SUM(consumption), 0) as total FROM Readings WHERE reading_date >= @start AND reading_date < @end",
+      { start: startOfLastMonth, end: startOfMonth }
+    ),
+
+    // 10: Defaulters (Current snapshot)
     query<{ count: number }>("SELECT COUNT(*) as count FROM vw_DefaulterStats"),
+    // 11: Defaulters Trend Proxy (New Overdue Bills Count this month)
+    query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM Bills WHERE status = 'overdue' AND due_date >= @start",
+      { start: startOfMonth }
+    ),
+    // 12: Defaulters Trend Proxy (New Overdue Bills Count last month)
+    query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM Bills WHERE status = 'overdue' AND due_date >= @start AND due_date < @end",
+      { start: startOfLastMonth, end: startOfMonth }
+    ),
   ]);
 
   const consumptionMap: Record<string, number> = {
@@ -42,23 +99,56 @@ export async function getDashboardStats() {
     gas: 0,
   };
 
-  consumptionRes.recordset.forEach((row) => {
+  let totalConsumptionCurrent = 0;
+  // Index 8 is consumptionCurrBreakdown
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (results[8] as any).recordset.forEach((row: any) => {
     if (row.utility_type) {
       consumptionMap[row.utility_type.toLowerCase()] = row.total;
+      totalConsumptionCurrent += row.total;
     }
   });
 
+  // Calculate Trends
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    const trend = ((current - previous) / previous) * 100;
+    return Number(trend.toFixed(2));
+  };
+
+  // Extract values using indices
+  const getResult = (index: number, field: string = "count") =>
+    (results[index] as any).recordset[0][field];
+
+  const customersCurrent = getResult(0);
+  const customersPrev = getResult(1);
+
+  const revenueCurrent = getResult(3, "total");
+  const revenuePrev = getResult(4, "total");
+
+  const consumptionPrev = getResult(9, "total");
+
+  const outstandingSnapshot = getResult(5, "total");
+  const outstandingNewCurr = getResult(6, "total");
+  const outstandingNewPrev = getResult(7, "total");
+
+  const defaultersSnapshot = getResult(10);
+  const defaultersNewCurr = getResult(11);
+  const defaultersNewPrev = getResult(12);
+
   return {
-    totalCustomers: customersRes.recordset[0].count,
-    totalCustomersTrend: 5,
-    activeMeters: metersRes.recordset[0].count,
+    totalCustomers: customersCurrent,
+    totalCustomersTrend: calculateTrend(customersCurrent, customersPrev),
+    activeMeters: getResult(2),
     activeMetersTrend: 2,
-    totalRevenue: revenueRes.recordset[0].total,
-    revenueTrend: 12,
-    outstandingAmount: outstandingRes.recordset[0].total,
-    outstandingTrend: 5,
+    totalRevenue: revenueCurrent,
+    revenueTrend: calculateTrend(revenueCurrent, revenuePrev),
+    outstandingAmount: outstandingSnapshot,
+    outstandingTrend: calculateTrend(outstandingNewCurr, outstandingNewPrev),
     monthlyConsumption: consumptionMap,
-    defaultersCount: defaultersRes.recordset[0].count,
+    consumptionTrend: calculateTrend(totalConsumptionCurrent, consumptionPrev),
+    defaultersCount: defaultersSnapshot,
+    defaultersTrend: calculateTrend(defaultersNewCurr, defaultersNewPrev),
   };
 }
 
@@ -129,7 +219,7 @@ export async function getTopConsumers(
       consumption: `${row.current_consumption.toFixed(0)} ${
         UTILITIES[row.utility_type as keyof typeof UTILITIES]?.unit || "Units"
       }`,
-      change: `${sign}${changePercent.toFixed(1)}%`,
+      change: `${sign}${changePercent.toFixed(2)}%`,
     };
   });
 }

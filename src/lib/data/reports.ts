@@ -40,7 +40,8 @@ export async function getRevenueReport(startDate?: Date, endDate?: Date) {
 export async function getConsumptionReport(startDate?: Date, endDate?: Date) {
   const end = endDate || new Date();
   const start =
-    startDate || new Date(new Date().setMonth(new Date().getMonth() - 6));
+    startDate ||
+    new Date(new Date().setFullYear(new Date().getFullYear() - 10));
 
   const result = await query<{
     month: string;
@@ -73,7 +74,8 @@ export async function getConsumptionReport(startDate?: Date, endDate?: Date) {
 export async function getCustomerReport(startDate?: Date, endDate?: Date) {
   const end = endDate || new Date();
   const start =
-    startDate || new Date(new Date().setMonth(new Date().getMonth() - 6));
+    startDate ||
+    new Date(new Date().setFullYear(new Date().getFullYear() - 10));
 
   const result = await query<{
     month: string;
@@ -116,14 +118,56 @@ export async function getDefaultersReport() {
   return result.recordset;
 }
 
-export async function getRevenueByUtilityType() {
+export async function getRevenueByUtilityType(): Promise<
+  {
+    utility_type: string;
+    customers: number;
+    consumption: number;
+    revenue: number;
+    growth: number;
+  }[]
+> {
+  const now = new Date();
+  // Format as YYYY-MM
+  const currentMonthStr = now.toISOString().slice(0, 7); // e.g., 2026-01
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthStr = prevMonthDate.toISOString().slice(0, 7); // e.g., 2025-12
+
   const result = await query<{
     utility_type: string;
     customers: number;
     consumption: number;
     revenue: number;
-  }>(`
-    SELECT * FROM vw_UtilityPerformance
-  `);
-  return result.recordset;
+    revenue_prev: number;
+  }>(
+    `
+    SELECT 
+      COALESCE(curr.utility_type, prev.utility_type) as utility_type,
+      (SELECT customers FROM vw_UtilityPerformance WHERE utility_type = COALESCE(curr.utility_type, prev.utility_type)) as customers,
+      ISNULL(curr.consumption, 0) as consumption,
+      ISNULL(curr.revenue, 0) as revenue,
+      ISNULL(prev.revenue, 0) as revenue_prev
+    FROM (SELECT * FROM vw_MonthlyUtilityStats WHERE month_str = @currentMonth) curr
+    FULL OUTER JOIN (SELECT * FROM vw_MonthlyUtilityStats WHERE month_str = @prevMonth) prev 
+      ON curr.utility_type = prev.utility_type
+    `,
+    { currentMonth: currentMonthStr, prevMonth: prevMonthStr }
+  );
+
+  return result.recordset.map((row) => {
+    let growth = 0;
+    if (row.revenue_prev > 0) {
+      growth = ((row.revenue - row.revenue_prev) / row.revenue_prev) * 100;
+    } else if (row.revenue > 0) {
+      growth = 100;
+    }
+
+    return {
+      utility_type: row.utility_type || "Unknown",
+      customers: row.customers || 0,
+      consumption: row.consumption || 0,
+      revenue: row.revenue || 0,
+      growth: Number(growth.toFixed(2)),
+    };
+  });
 }

@@ -7,6 +7,7 @@ interface RevenueByUtilityData {
   customers: number;
   consumption: number;
   revenue: number;
+  growth: number;
 }
 
 interface RevenueByUtilityTableProps {
@@ -41,9 +42,21 @@ export const RevenueByUtilityTable = ({ data }: RevenueByUtilityTableProps) => {
     {
       key: "growth",
       label: "Growth",
-      render: () => (
-        <span className="text-green-600 dark:text-green-400">+8%</span>
-      ),
+      render: (value: number) => {
+        const isPositive = value >= 0;
+        return (
+          <span
+            className={
+              isPositive
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-600 dark:text-red-400"
+            }
+          >
+            {isPositive ? "+" : ""}
+            {value.toFixed(2)}%
+          </span>
+        );
+      },
     },
   ];
 
