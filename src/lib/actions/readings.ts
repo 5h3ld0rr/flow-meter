@@ -64,19 +64,6 @@ export const createReading = async (
       }
     );
 
-    await query(
-      `UPDATE Meters
-       SET last_reading_value = @readingValue,
-           last_reading_date = @readingDate,
-           updated_at = GETUTCDATE()
-       WHERE id = @meterId`,
-      {
-        meterId: meterIntId,
-        readingValue: validData.reading_value,
-        readingDate: validData.reading_date,
-      }
-    );
-
     revalidatePath("/UMS/Readings");
     revalidatePath("/UMS/Dashboard");
     return { success: true };

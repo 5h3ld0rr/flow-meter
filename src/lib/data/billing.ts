@@ -103,3 +103,44 @@ export async function addTariffRate(
     { utilityType, customerType, rate }
   );
 }
+
+export async function createBill(data: {
+  customerId: number;
+  meterId: number;
+  readingId?: number;
+  billingPeriodStart: Date | string;
+  billingPeriodEnd: Date | string;
+  previousReading: number;
+  currentReading: number;
+  consumption: number;
+  tariffRate: number;
+  baseAmount: number;
+  taxAmount: number;
+  dueDate: Date | string;
+}) {
+  await query(
+    `INSERT INTO Bills (
+      customer_id, meter_id, reading_id, billing_period_start, billing_period_end,
+      previous_reading, current_reading, consumption, tariff_rate,
+      base_amount, tax_amount, due_date, status
+    ) VALUES (
+      @customerId, @meterId, @readingId, @billingPeriodStart, @billingPeriodEnd,
+      @previousReading, @currentReading, @consumption, @tariffRate,
+      @baseAmount, @taxAmount, @dueDate, 'generated'
+    )`,
+    {
+      customerId: data.customerId,
+      meterId: data.meterId,
+      readingId: data.readingId || null,
+      billingPeriodStart: data.billingPeriodStart,
+      billingPeriodEnd: data.billingPeriodEnd,
+      previousReading: data.previousReading,
+      currentReading: data.currentReading,
+      consumption: data.consumption,
+      tariffRate: data.tariffRate,
+      baseAmount: data.baseAmount,
+      taxAmount: data.taxAmount,
+      dueDate: data.dueDate,
+    }
+  );
+}

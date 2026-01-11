@@ -231,9 +231,6 @@ export default async function Page({
                   Consumption
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
                   Notes
                 </th>
               </tr>
@@ -254,20 +251,6 @@ export default async function Page({
                   <td className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
                     {Number(reading.consumption).toLocaleString()}{" "}
                     {utilityConfig.unit}
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge
-                      variant={
-                        reading.status === "verified"
-                          ? "success"
-                          : reading.status === "disputed"
-                          ? "danger"
-                          : "warning"
-                      }
-                      size="sm"
-                    >
-                      {reading.status}
-                    </Badge>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                     {reading.notes || "-"}

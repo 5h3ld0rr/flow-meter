@@ -48,8 +48,6 @@ CREATE TABLE dbo.Meters (
     location NVARCHAR(MAX) NOT NULL,
     status NVARCHAR(50) NOT NULL DEFAULT 'active' CONSTRAINT CHK_Meters_Status CHECK (status IN ('active', 'inactive', 'maintenance')),
     install_date DATE NOT NULL,
-    last_reading_value DECIMAL(18,2) NULL,
-    last_reading_date DATETIME2 NULL,
     created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     CONSTRAINT UK_Meters_MeterId UNIQUE (meter_id),
@@ -100,6 +98,7 @@ CREATE TABLE dbo.Bills (
     bill_id AS CONCAT('BILL-', CAST(YEAR(created_at) * 100 + MONTH(created_at) AS VARCHAR(6)), '-', RIGHT('00000' + CAST(id AS VARCHAR(10)), 5)) PERSISTED,
     customer_id INT NOT NULL,
     meter_id INT NOT NULL,
+    reading_id INT NULL,
     billing_period_start DATE NOT NULL,
     billing_period_end DATE NOT NULL,
     previous_reading DECIMAL(18,2) NOT NULL,
@@ -115,7 +114,8 @@ CREATE TABLE dbo.Bills (
     updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     CONSTRAINT UK_Bills_BillId UNIQUE (bill_id),
     CONSTRAINT FK_Bills_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customers(id),
-    CONSTRAINT FK_Bills_Meter FOREIGN KEY (meter_id) REFERENCES dbo.Meters(id)
+    CONSTRAINT FK_Bills_Meter FOREIGN KEY (meter_id) REFERENCES dbo.Meters(id),
+    CONSTRAINT FK_Bills_Reading FOREIGN KEY (reading_id) REFERENCES dbo.Readings(id)
 );
 GO
 CREATE UNIQUE INDEX IX_Bills_BillId ON dbo.Bills(bill_id);

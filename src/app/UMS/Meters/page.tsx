@@ -63,7 +63,7 @@ export default async function Page({
 
       {/* Meters Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {meters.map((meter: Meter & { customer_name: string }) => {
+        {meters.map((meter) => {
           const utilityConfig = UTILITIES[meter.utility_type];
 
           return (

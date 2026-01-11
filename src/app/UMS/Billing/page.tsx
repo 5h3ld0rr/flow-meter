@@ -1,8 +1,10 @@
 import { Badge, Button, GlassCard, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { FileText, Calculator, Send, ArrowLeft } from "lucide-react";
+import { Calculator, Send, ArrowLeft } from "lucide-react";
 import { getBills, getTariffRate } from "@/lib/data/billing";
-import { getMeterById, getMeterLastReading } from "@/lib/data/meters";
+import { generateBillAction } from "@/lib/actions/billing";
+import { getMeterById } from "@/lib/data/meters";
+import { getReadings } from "@/lib/data/readings";
 import { Header } from "@/components/layout";
 import { BillingStepOne } from "@/components/Billing/BillingStepOne";
 
@@ -13,8 +15,10 @@ export default async function Page({
     step?: string;
     customerId?: string;
     meterId?: string;
+    readingId?: string;
     currentReading?: string;
-    billingDate?: string;
+    startDate?: string;
+    endDate?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -28,12 +32,17 @@ export default async function Page({
     meterId: params.meterId || "",
     previousReading: 0,
     currentReading: parseFloat(params.currentReading || "0"),
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    readingId: params.readingId,
     consumption: 0,
     tariffRate: 0,
     amount: 0,
     tax: 0,
     total: 0,
     meterFound: false,
+    internalMeterId: 0,
+    internalCustomerId: 0,
     error: "",
   };
 
@@ -43,8 +52,19 @@ export default async function Page({
       billingSummary.meterFound = true;
       billingSummary.customerName = meter.customer_name;
       billingSummary.customerId = meter.customer_display_id;
-      const lastReading = await getMeterLastReading(params.meterId);
-      billingSummary.previousReading = lastReading?.last_reading_value || 0;
+      billingSummary.internalCustomerId = meter.customer_id;
+      billingSummary.internalMeterId = meter.id;
+
+      const latestReadings = await getReadings({ meterId: params.meterId }, 2);
+
+      const latest = latestReadings[0];
+      const previous = latestReadings[1];
+
+      billingSummary.previousReading = previous?.reading_value || 0;
+
+      if (!params.currentReading && latest) {
+        billingSummary.currentReading = latest.reading_value;
+      }
 
       billingSummary.tariffRate = await getTariffRate(meter.utility_type);
 
@@ -121,7 +141,8 @@ export default async function Page({
             <BillingStepOne
               initialCustomerId={billingSummary.customerId}
               initialMeterId={billingSummary.meterId}
-              initialBillingDate={params.billingDate}
+              initialStartDate={billingSummary.startDate}
+              initialEndDate={billingSummary.endDate}
             />
           )}
 
@@ -138,6 +159,21 @@ export default async function Page({
                 name="meterId"
                 value={billingSummary.meterId}
               />
+              <input
+                type="hidden"
+                name="startDate"
+                value={billingSummary.startDate}
+              />
+              <input
+                type="hidden"
+                name="endDate"
+                value={billingSummary.endDate}
+              />
+              <input
+                type="hidden"
+                name="readingId"
+                value={billingSummary.readingId}
+              />
 
               <div className="space-y-4">
                 {billingSummary.error && (
@@ -146,29 +182,18 @@ export default async function Page({
                   </div>
                 )}
 
-                <div className="glass p-3 rounded-lg mb-2">
-                  <p className="text-sm text-gray-500">
-                    Customer:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-200">
-                      {billingSummary.customerName || "Unknown"}
-                    </span>
-                  </p>
-                </div>
-
                 <Input
                   label="Previous Reading"
                   type="number"
                   value={billingSummary.previousReading}
                   readOnly
-                  disabled
                 />
                 <Input
                   name="currentReading"
                   label="Current Reading"
                   type="number"
-                  placeholder="Enter current reading"
-                  min={billingSummary.previousReading}
-                  required
+                  value={billingSummary.currentReading}
+                  readOnly
                 />
                 <div className="glass rounded-lg p-4">
                   <div className="flex justify-between mb-2">
@@ -204,8 +229,77 @@ export default async function Page({
           )}
 
           {stepNumber === 3 && (
-            <div className="space-y-4">
+            <form action={generateBillAction} className="space-y-4">
+              <input
+                type="hidden"
+                name="customerId"
+                value={billingSummary.internalCustomerId}
+              />
+              <input
+                type="hidden"
+                name="meterId"
+                value={billingSummary.internalMeterId}
+              />
+              <input
+                type="hidden"
+                name="readingId"
+                value={billingSummary.readingId}
+              />
+              <input
+                type="hidden"
+                name="startDate"
+                value={billingSummary.startDate}
+              />
+              <input
+                type="hidden"
+                name="endDate"
+                value={billingSummary.endDate}
+              />
+              <input
+                type="hidden"
+                name="previousReading"
+                value={billingSummary.previousReading}
+              />
+              <input
+                type="hidden"
+                name="currentReading"
+                value={billingSummary.currentReading}
+              />
+              <input
+                type="hidden"
+                name="consumption"
+                value={billingSummary.consumption}
+              />
+              <input
+                type="hidden"
+                name="tariffRate"
+                value={billingSummary.tariffRate}
+              />
+              <input
+                type="hidden"
+                name="baseAmount"
+                value={billingSummary.amount}
+              />
+              <input
+                type="hidden"
+                name="taxAmount"
+                value={billingSummary.tax}
+              />
+              <input
+                type="hidden"
+                name="totalAmount"
+                value={billingSummary.total}
+              />
+
               <div className="glass rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Billing Period
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {billingSummary.startDate} to {billingSummary.endDate}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     Consumption
@@ -242,18 +336,18 @@ export default async function Page({
               <div className="flex gap-4 absolute bottom-0 left-0 p-6 w-full">
                 <Button
                   variant="secondary"
-                  href={`/UMS/Billing?step=2&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}`}
+                  href={`/UMS/Billing?step=2&meterId=${billingSummary.meterId}&customerId=${billingSummary.customerId}&startDate=${billingSummary.startDate}&endDate=${billingSummary.endDate}&readingId=${billingSummary.readingId}`}
                   fullWidth
                 >
                   <ArrowLeft size={18} />
                   Back
                 </Button>
-                <Button variant="primary" fullWidth>
+                <Button type="submit" variant="primary" fullWidth>
                   <Send size={18} />
                   Generate Bill
                 </Button>
               </div>
-            </div>
+            </form>
           )}
         </GlassCard>
 
@@ -301,6 +395,30 @@ export default async function Page({
 
             <div className="glass rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                Billing Period
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Start Date:
+                  </span>
+                  <span className="text-gray-900 dark:text-white">
+                    {billingSummary.startDate || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    End Date:
+                  </span>
+                  <span className="text-gray-900 dark:text-white">
+                    {billingSummary.endDate || "-"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
                 Consumption Details
               </h3>
               <div className="space-y-2 text-sm">
@@ -331,10 +449,10 @@ export default async function Page({
               </div>
             </div>
 
-            <Button variant="secondary" fullWidth>
+            {/* <Button variant="secondary" fullWidth>
               <FileText size={18} className="mr-2" />
               Download PDF
-            </Button>
+            </Button> */}
           </div>
         </GlassCard>
       </div>

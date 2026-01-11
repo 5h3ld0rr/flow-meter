@@ -90,3 +90,17 @@ BEGIN
     FROM inserted i;
 END;
 GO
+
+CREATE OR ALTER TRIGGER trg_Meters_UpdateTimestamp
+ON Meters
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    UPDATE m
+    SET updated_at = GETUTCDATE()
+    FROM Meters m
+    INNER JOIN inserted i ON m.id = i.id;
+END;
+GO

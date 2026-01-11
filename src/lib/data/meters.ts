@@ -2,12 +2,19 @@ import { query } from "@/lib/db";
 
 export async function getMeters(utilityType?: string, customerId?: string) {
   const result = await query<
-    Meter & { customer_display_id: string; customer_name: string }
+    Meter & {
+      customer_display_id: string;
+      customer_name: string;
+      last_reading_value: number | null;
+      last_reading_date: Date | null;
+    }
   >(
     `SELECT 
         m.*,
         c.customer_id as customer_display_id,
-        c.name as customer_name
+        c.name as customer_name,
+        (SELECT TOP 1 r.reading_value FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_value,
+        (SELECT TOP 1 r.reading_date FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_date
     FROM Meters m
     INNER JOIN Customers c ON m.customer_id = c.id
     WHERE (@utilityType IS NULL OR m.utility_type = @utilityType)
@@ -24,13 +31,17 @@ export async function getMeterById(id: string) {
       customer_display_id: string;
       customer_name: string;
       customer_email: string;
+      last_reading_value: number | null;
+      last_reading_date: Date | null;
     }
   >(
     `SELECT 
         m.*,
         c.customer_id as customer_display_id,
         c.name as customer_name,
-        c.email as customer_email
+        c.email as customer_email,
+        (SELECT TOP 1 r.reading_value FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_value,
+        (SELECT TOP 1 r.reading_date FROM Readings r WHERE r.meter_id = m.id ORDER BY r.reading_date DESC) as last_reading_date
     FROM Meters m
     INNER JOIN Customers c ON m.customer_id = c.id
     WHERE m.meter_id = @id`,
@@ -59,13 +70,22 @@ export async function getMeterCount(): Promise<number> {
 export async function getMeterLastReading(meterId: string) {
   const result = await query<{
     last_reading_value: number | null;
+    last_reading_date: Date | null;
     customer_id: string;
   }>(
-    `SELECT m.last_reading_value, c.customer_id
+    `SELECT TOP 1
+       r.reading_value as last_reading_value,
+       r.reading_date as last_reading_date,
+       c.customer_id
      FROM Meters m
      INNER JOIN Customers c ON m.customer_id = c.id
-     WHERE m.meter_id = @meterId`,
+     LEFT JOIN Readings r ON r.meter_id = m.id
+     WHERE m.meter_id = @meterId
+     ORDER BY r.reading_date DESC`,
     { meterId }
   );
-  return result.recordset[0] || null;
+
+  if (!result.recordset.length) return null;
+
+  return result.recordset[0];
 }

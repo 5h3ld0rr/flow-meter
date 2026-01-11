@@ -28,6 +28,7 @@ declare global {
   }
 
   interface Meter {
+    id: number;
     meter_id: string;
     serial_number: string;
     customer_id: number;
@@ -35,8 +36,7 @@ declare global {
     location: string;
     status: "active" | "inactive" | "maintenance";
     install_date: Date;
-    last_reading_value: number | null;
-    last_reading_date: Date | null;
+
     created_at: Date;
     updated_at: Date;
   }
@@ -67,6 +67,7 @@ declare global {
     bill_id: string;
     customer_id: number;
     meter_id: number;
+    reading_id?: number;
     billing_period_start: Date;
     billing_period_end: Date;
     previous_reading: number;

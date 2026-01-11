@@ -9,18 +9,52 @@ import { toast } from "sonner";
 interface BillingStepOneProps {
   initialCustomerId?: string;
   initialMeterId?: string;
-  initialBillingDate?: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
 }
 
 export function BillingStepOne({
   initialCustomerId = "",
   initialMeterId = "",
-  initialBillingDate = "",
+  initialStartDate = "",
+  initialEndDate = "",
 }: BillingStepOneProps) {
   const [customerId, setCustomerId] = useState(initialCustomerId);
-  const [meters, setMeters] = useState<{ value: string; label: string }[]>([]);
+  const [meters, setMeters] = useState<
+    {
+      value: string;
+      label: string;
+      latestReadingId?: number;
+      latestReadingDate?: string | Date;
+      previousReadingDate?: string | Date;
+    }[]
+  >([]);
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
+  const [readingId, setReadingId] = useState<number | undefined>(undefined);
   const [isValidating, setIsValidating] = useState(false);
   const [customerName, setCustomerName] = useState("");
+
+  const handleMeterSelection = (
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
+    const selectedMeterId = e.target.value;
+    const selectedMeter = meters.find((m) => m.value === selectedMeterId);
+
+    if (selectedMeter?.latestReadingDate) {
+      const end = new Date(selectedMeter.latestReadingDate);
+      setEndDate(end.toISOString().split("T")[0]);
+    }
+
+    if (selectedMeter?.previousReadingDate) {
+      const start = new Date(selectedMeter.previousReadingDate);
+      setStartDate(start.toISOString().split("T")[0]);
+    }
+
+    if (selectedMeter?.latestReadingId) {
+      setReadingId(selectedMeter.latestReadingId);
+    }
+  };
 
   const handleBlur = async () => {
     if (!customerId) return;
@@ -70,6 +104,7 @@ export function BillingStepOne({
             label="Select Meter"
             options={[{ value: "", label: "Select a meter" }, ...meters]}
             defaultValue={initialMeterId}
+            onChange={handleMeterSelection}
             required
           />
         ) : (
@@ -83,12 +118,9 @@ export function BillingStepOne({
           />
         )}
 
-        <Input
-          label="Billing Period"
-          type="date"
-          name="billingDate"
-          defaultValue={initialBillingDate}
-        />
+        <input type="hidden" name="startDate" value={startDate} />
+        <input type="hidden" name="endDate" value={endDate} />
+        <input type="hidden" name="readingId" value={readingId} />
 
         <div className="absolute bottom-0 left-0 p-6 w-full">
           <Button
