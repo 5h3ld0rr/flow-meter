@@ -4,7 +4,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
 }
-export function Logo({ size = "md", showText = true }: LogoProps) {
+export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
     sm: {
       icon: 16,
@@ -35,7 +35,7 @@ export function Logo({ size = "md", showText = true }: LogoProps) {
           currentSize.container
         )}
       >
-        <div className="absolute inset-0 rounded-xl bg-linear-to-br from-blue-400/20 to-purple-400/20 dark:from-cyan-400/20 dark:to-purple-400/20 animate-pulse repeat-infinite" />
+        <div className="absolute inset-0 rounded-xl bg-linear-to-br from-blue-400/20 to-purple-400/20 dark:from-cyan-400/20 dark:to-purple-400/20 animate-pulse" />
         <div className="relative flex items-center justify-center h-full">
           <div className="absolute">
             <Zap
@@ -64,4 +64,4 @@ export function Logo({ size = "md", showText = true }: LogoProps) {
       )}
     </div>
   );
-}
+};

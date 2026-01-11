@@ -20,7 +20,7 @@ interface LineChartProps {
   }[];
   xAxisKey: string;
 }
-export function LineChart({ data, dataKeys, xAxisKey }: LineChartProps) {
+export const LineChart = ({ data, dataKeys, xAxisKey }: LineChartProps) => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   return (

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import React from "react";
+
 interface GlassCardProps {
   children: React.ReactNode;
   className?: string;
@@ -7,13 +8,14 @@ interface GlassCardProps {
   hover?: boolean;
   onClick?: () => void;
 }
-export function GlassCard({
+
+export const GlassCard = ({
   children,
   className = "",
   variant = "default",
   hover = false,
   onClick,
-}: GlassCardProps) {
+}: GlassCardProps) => {
   const variantClasses = {
     default: "glass",
     strong: "glass-strong",
@@ -25,7 +27,7 @@ export function GlassCard({
       onClick={onClick}
       className={cn(
         variantClasses[variant],
-        "rounded-2xl bg-white dark:bg-slate-900/80",
+        "rounded-2xl bg-white dark:bg-slate-900/80 shadow-glass dark:shadow-glass-dark",
         hover ? "hover-lift cursor-pointer" : "",
         className
       )}

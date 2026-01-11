@@ -11,6 +11,7 @@ import {
   Settings,
   Users,
   X,
+  History,
 } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { Logo } from "../ui/Logo";
@@ -19,20 +20,81 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "../ui/Button";
 
 const NAV_ITEMS = [
-  { path: "/UMS/Dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/UMS/Customers", label: "Customers", icon: Users },
-  { path: "/UMS/Meters", label: "Meters", icon: Gauge },
-  { path: "/UMS/Readings", label: "Readings", icon: ClipboardList },
-  { path: "/UMS/Billing", label: "Billing", icon: FileText },
-  { path: "/UMS/Payments", label: "Payments", icon: CreditCard },
-  { path: "/UMS/Reports", label: "Reports", icon: BarChart3 },
-  { path: "/UMS/Settings", label: "Settings", icon: Settings },
+  {
+    path: "/UMS/Dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    roles: ["admin", "staff", "officer", "cashier", "manager"],
+  },
+  {
+    path: "/UMS/Customers",
+    label: "Customers",
+    icon: Users,
+    roles: ["admin", "staff", "manager"],
+  },
+  {
+    path: "/UMS/Meters",
+    label: "Meters",
+    icon: Gauge,
+    roles: ["admin", "staff"],
+  },
+  {
+    path: "/UMS/Readings",
+    label: "Readings",
+    icon: ClipboardList,
+    roles: ["admin", "officer"],
+  },
+  {
+    path: "/UMS/Billing",
+    label: "Billing",
+    icon: FileText,
+    roles: ["admin", "cashier"],
+  },
+  {
+    path: "/UMS/Payments",
+    label: "Payments",
+    icon: CreditCard,
+    roles: ["admin", "cashier"],
+  },
+  {
+    path: "/UMS/Reports",
+    label: "Reports",
+    icon: BarChart3,
+    roles: ["admin", "manager"],
+  },
+  {
+    path: "/UMS/Users",
+    label: "Users",
+    icon: Users,
+    roles: ["admin"],
+  },
+  {
+    path: "/UMS/ActivityLog",
+    label: "Activity Log",
+    icon: History,
+    roles: ["admin", "staff"],
+  },
+  {
+    path: "/UMS/Settings",
+    label: "Settings",
+    icon: Settings,
+    roles: ["admin", "staff"],
+  },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  role?: string;
+}
+
+export const Sidebar = ({ role = "staff" }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const filteredNavItems = NAV_ITEMS.filter((item) =>
+    item.roles.includes(role)
+  );
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -64,8 +126,9 @@ export function Sidebar() {
           </div>
           {/* Navigation */}
           <nav className="flex-1 pt-8 px-4 overflow-y-auto scrollbar-thin">
-            {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.path;
+            {filteredNavItems.map((item) => {
+              const isActive = pathname.includes(item.path);
+              const Icon = item.icon;
               return (
                 <Button
                   key={item.path}
@@ -75,10 +138,11 @@ export function Sidebar() {
                   }}
                   variant={isActive ? "primary" : "ghost"}
                   fullWidth
-                  className="gap-3 px-4 py-3"
+                  icon={<Icon size={20} className="mr-1" />}
+                  align="start"
+                  className="px-4 py-3 font-medium"
                 >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.label}</span>
+                  {item.label}
                 </Button>
               );
             })}
@@ -93,4 +157,4 @@ export function Sidebar() {
       </aside>
     </>
   );
-}
+};

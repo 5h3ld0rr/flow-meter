@@ -1,9 +1,20 @@
 "use client";
 
-import { Button, GlassCard, Input, Logo } from "@/components";
+import { Button, GlassCard, Input, Logo, toast } from "@/components/ui";
+import { login } from "@/lib/actions/auth";
 import { Mail, Lock } from "lucide-react";
+import { useActionState } from "react";
+import { useEffect } from "react";
 
 export default function LoginPage() {
+  const [state, action, isPending] = useActionState(login, undefined);
+
+  useEffect(() => {
+    if (state?.message) {
+      toast("error", state.message);
+    }
+  }, [state]);
+
   return (
     <main className="flex justify-center items-center w-full">
       <GlassCard variant="strong" className="w-full max-w-md p-8 relative">
@@ -17,7 +28,7 @@ export default function LoginPage() {
           </p>
         </div>
         {/* Login Form */}
-        <form className="space-y-4">
+        <form className="space-y-4" action={action}>
           <Input
             name="email"
             type="email"
@@ -39,9 +50,11 @@ export default function LoginPage() {
             fullWidth
             size="lg"
             type="submit"
-            className="mt-7 justify-center"
+            className="mt-12 justify-center"
+            icon={<Lock size={18} />}
+            loading={isPending}
           >
-            Sign In
+            {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </form>
       </GlassCard>

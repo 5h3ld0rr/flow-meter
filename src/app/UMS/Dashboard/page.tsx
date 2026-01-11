@@ -1,20 +1,32 @@
 import { Users, Gauge, DollarSign, AlertCircle } from "lucide-react";
+import { UTILITIES } from "@/constants";
+import { Badge, GlassCard } from "@/components/ui";
+import { Header } from "@/components/layout";
+import { LineChart, PieChart, StatCard } from "@/components/charts";
 import {
-  CONSUMPTION_DATA,
-  RECENT_ACTIVITIES,
-  TOP_CONSUMERS,
-  UTILITIES,
-} from "@/constants";
-import {
-  Badge,
-  GlassCard,
-  Header,
-  LineChart,
-  PieChart,
-  StatCard,
-} from "@/components";
+  getDashboardStats,
+  getConsumptionTrend,
+  getTopConsumers,
+  getRecentActivities,
+  getUtilityDistribution,
+} from "@/lib/data/dashboard";
 
-export default function DashboardPage() {
+export const metadata = {
+  title: "Dashboard",
+  description: "Overview of utility management system",
+};
+
+export default async function Page() {
+  // Fetch all dashboard data from database
+  const [stats, consumptionData, topConsumers, recentActivities, utilityDist] =
+    await Promise.all([
+      getDashboardStats(),
+      getConsumptionTrend(7),
+      getTopConsumers(4),
+      getRecentActivities(4),
+      getUtilityDistribution(),
+    ]);
+
   return (
     <>
       <Header
@@ -26,40 +38,40 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
           title="Total Customers"
-          value="2,847"
+          value={stats.totalCustomers.toLocaleString()}
           icon={<Users size={24} />}
           trend={{
-            value: 12,
-            isPositive: true,
+            value: stats.totalCustomersTrend,
+            isPositive: stats.totalCustomersTrend >= 0,
           }}
           color="blue"
         />
         <StatCard
           title="Active Meters"
-          value="3,521"
+          value={stats.activeMeters.toLocaleString()}
           icon={<Gauge size={24} />}
           trend={{
-            value: 5,
-            isPositive: true,
+            value: stats.activeMetersTrend,
+            isPositive: stats.activeMetersTrend >= 0,
           }}
           color="green"
         />
         <StatCard
           title="Monthly Revenue"
-          value="$124.5K"
+          value={`Rs. ${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{
-            value: 8,
-            isPositive: true,
+            value: stats.monthlyRevenueTrend,
+            isPositive: stats.monthlyRevenueTrend >= 0,
           }}
           color="yellow"
         />
         <StatCard
           title="Outstanding"
-          value="$23.2K"
+          value={`Rs. ${(stats.outstandingAmount / 1000).toFixed(1)}K`}
           icon={<AlertCircle size={24} />}
           trend={{
-            value: 3,
+            value: stats.outstandingTrend,
             isPositive: false,
           }}
           color="red"
@@ -78,10 +90,10 @@ export default function DashboardPage() {
           </div>
           <div className="h-64">
             <LineChart
-              data={CONSUMPTION_DATA}
+              data={consumptionData}
               xAxisKey="day"
-              dataKeys={UTILITIES.map((util) => ({
-                key: util.name.toLocaleLowerCase(),
+              dataKeys={Object.values(UTILITIES).map((util) => ({
+                key: util.name.toLowerCase(),
                 color: util.color,
                 name: util.name,
               }))}
@@ -95,10 +107,10 @@ export default function DashboardPage() {
             Top Consumers
           </h2>
           <div className="space-y-4">
-            {TOP_CONSUMERS.map((consumer, index) => (
+            {topConsumers.map((consumer, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">
+                  <p className="font-medium text-gray-800 dark:text-slate-200 text-sm">
                     {consumer.name}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -126,13 +138,7 @@ export default function DashboardPage() {
             Utility Distribution
           </h2>
           <div className="h-64">
-            <PieChart
-              data={UTILITIES.map((util) => ({
-                name: util.name,
-                color: util.color,
-                value: 33.33,
-              }))}
-            />
+            <PieChart data={utilityDist} />
           </div>
         </GlassCard>
         <GlassCard className="p-6">
@@ -140,22 +146,25 @@ export default function DashboardPage() {
             Recent Activity
           </h2>
           <div className="space-y-4 max-h-64 overflow-y-auto scrollbar-thin">
-            {RECENT_ACTIVITIES.map((activity) => (
+            {recentActivities.map((activity) => (
               <div
                 key={activity.id}
                 className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-smooth"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium  text-gray-800 dark:text-slate-200">
                     {activity.customer}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {activity.action}
+                    {activity.description}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {activity.amount || activity.value}
+                  <p className="font-semibold  text-gray-800 dark:text-slate-200">
+                    {activity.activity_type === "payment" ||
+                    activity.activity_type === "bill"
+                      ? "Rs. " + activity.amount
+                      : activity.amount ?? "\u00A0"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {activity.time}

@@ -1,0 +1,99 @@
+"use client";
+
+import { Button, Input, Modal, ModalRef, toast } from "@/components/ui";
+import { createCustomer } from "@/lib/actions/customers";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef } from "react";
+
+export default function Page() {
+  const router = useRouter();
+  const modalRef = useRef<ModalRef>(null);
+
+  const [state, action, isPending] = useActionState(createCustomer, undefined);
+
+  useEffect(() => {
+    if (state?.message) {
+      if (state.success) {
+        modalRef.current?.close();
+        router.refresh();
+      }
+      toast(state.success ? "success" : "error", state.message);
+    }
+  }, [state, router]);
+
+  const handleClose = () => {
+    router.back();
+  };
+
+  return (
+    <Modal
+      title="Add New Customer"
+      size="lg"
+      expectedPath="/UMS/Customers/New"
+      onClose={handleClose}
+      ref={modalRef}
+    >
+      <form className="space-y-4" action={action}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            name="name"
+            label="Full Name"
+            placeholder="John Doe"
+            required
+          />
+          <Input
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="john@email.com"
+            required
+          />
+          <Input
+            name="phone"
+            label="Phone"
+            type="tel"
+            placeholder="+94 77 567 8900"
+            required
+          />
+          <Input label="Customer ID" placeholder="Auto-generated" disabled />
+          <Input
+            name="type"
+            label="Customer Type"
+            type="select"
+            options={[
+              { value: "household", label: "Household" },
+              { value: "business", label: "Business" },
+              { value: "government", label: "Government" },
+            ]}
+            required
+          />
+        </div>
+        <Input
+          name="address"
+          label="Address"
+          placeholder="123 Main Street, City, State"
+          required
+        />
+
+        <div className="flex gap-3 pt-4">
+          <Button
+            variant="primary"
+            type="submit"
+            fullWidth
+            disabled={isPending}
+          >
+            {isPending ? "Creating..." : "Create Customer"}
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => modalRef.current?.close()}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

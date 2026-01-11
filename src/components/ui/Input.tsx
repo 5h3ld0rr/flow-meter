@@ -2,22 +2,18 @@
 
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, InputHTMLAttributes } from "react";
 
-interface InputProps {
-  type?: "text" | "email" | "password" | "number" | "tel" | "date" | "select";
-  name?: string;
-  placeholder?: string;
+interface InputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   label?: string;
-  defaultValue?: string | number;
   error?: string;
-  disabled?: boolean;
-  required?: boolean;
-  className?: string;
   icon?: React.ReactNode;
   options?: { value: string; label: string }[];
+  size?: "sm" | "md" | "lg";
 }
-export function Input({
+
+export const Input = ({
   type = "text",
   name,
   placeholder,
@@ -28,10 +24,20 @@ export function Input({
   disabled = false,
   required = false,
   className = "",
+  step,
+  readOnly = false,
   icon,
-}: InputProps) {
+  size = "md",
+  ...props
+}: InputProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === "password" && showPassword ? "text" : type;
+
+  const sizeClasses = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2.5",
+    lg: "px-5 py-3 text-lg",
+  };
 
   return (
     <div className={cn("w-full", className)}>
@@ -77,12 +83,16 @@ export function Input({
             defaultValue={defaultValue}
             disabled={disabled}
             required={required}
+            step={step}
+            readOnly={readOnly}
             className={cn(
-              "w-full px-4 py-2.5 rounded-lg glass text-gray-900 dark:text-slate-200 placeholder-gray-400 dark:placeholder-text-slate-300 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-blue-500 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed",
+              "w-full rounded-lg glass text-gray-900 dark:text-slate-200 placeholder-gray-400 dark:placeholder-text-slate-300 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-blue-500 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed",
+              sizeClasses[size],
               icon ? "pl-10" : "",
               type === "password" ? "pr-10" : "",
               error ? "ring-2 ring-red-500" : ""
             )}
+            {...props}
           />
         )}
         {type === "password" && (
@@ -101,4 +111,4 @@ export function Input({
       )}
     </div>
   );
-}
+};

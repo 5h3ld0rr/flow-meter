@@ -16,7 +16,7 @@ interface PieChartProps {
     color: string;
   }[];
 }
-export function PieChart({ data }: PieChartProps) {
+export const PieChart = ({ data }: PieChartProps) => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   return (
