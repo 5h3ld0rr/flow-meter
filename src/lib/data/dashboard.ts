@@ -20,8 +20,7 @@ export async function getDashboardStats() {
       "SELECT COUNT(*) as count FROM Meters WHERE status = 'active'"
     ),
     query<{ total: number }>(
-      "SELECT ISNULL(SUM(amount), 0) as total FROM Payments WHERE payment_date >= @start",
-      { start: startOfMonth }
+      "SELECT ISNULL(SUM(amount), 0) as total FROM Payments"
     ),
     query<{ total: number }>(
       "SELECT ISNULL(SUM(balance), 0) as total FROM Customers WHERE balance > 0"
@@ -54,8 +53,8 @@ export async function getDashboardStats() {
     totalCustomersTrend: 5,
     activeMeters: metersRes.recordset[0].count,
     activeMetersTrend: 2,
-    monthlyRevenue: revenueRes.recordset[0].total,
-    monthlyRevenueTrend: 12,
+    totalRevenue: revenueRes.recordset[0].total,
+    revenueTrend: 12,
     outstandingAmount: outstandingRes.recordset[0].total,
     outstandingTrend: 5,
     monthlyConsumption: consumptionMap,

@@ -32,14 +32,14 @@ export default async function Page({
               xAxisKey="month"
               dataKeys={[
                 {
-                  key: "revenue",
-                  color: "#b15eff",
-                  name: "Revenue",
-                },
-                {
                   key: "target",
                   color: "#51a2ff",
                   name: "Target",
+                },
+                {
+                  key: "revenue",
+                  color: "#b15eff",
+                  name: "Revenue (LKR)",
                 },
               ]}
             />

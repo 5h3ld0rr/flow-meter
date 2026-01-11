@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, toast } from "@/components/ui";
-import { CheckCircle, DollarSign, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import {
   processPaymentAction,
@@ -89,7 +89,7 @@ export const ProcessPaymentForm = () => {
         required
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        icon={<DollarSign size={18} />}
+        icon={<span className="text-xs font-bold text-gray-500">LKR</span>}
         step="0.01"
       />
 

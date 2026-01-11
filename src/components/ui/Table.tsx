@@ -16,18 +16,25 @@ export interface TableProps {
   data: unknown[];
   onRowClick?: (row: unknown) => void;
   className?: string;
+  maxHeight?: string;
 }
 export const Table = ({
   columns,
   data,
   onRowClick,
   className = "",
+  maxHeight = "max-h-[calc(100vh-200px)]",
 }: TableProps) => {
   return (
-    <div className={cn("glass rounded-xl overflow-hidden", className)}>
-      <div className="overflow-x-auto scrollbar-thin">
-        <table className="w-full">
-          <thead>
+    <div
+      className={cn(
+        "glass rounded-xl overflow-hidden flex flex-col",
+        className
+      )}
+    >
+      <div className={cn("overflow-auto scrollbar-thin", maxHeight)}>
+        <table className="w-full relative">
+          <thead className="sticky top-0 z-10 bg-white backdrop-blur-md dark:bg-gray-900">
             <tr className="border-b border-gray-200 dark:border-gray-700">
               {columns.map((column) => (
                 <th
@@ -76,7 +83,7 @@ export const Table = ({
         </table>
       </div>
       {data.length === 0 && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800">
           No data available
         </div>
       )}

@@ -57,12 +57,12 @@ export default async function Page() {
           color="green"
         />
         <StatCard
-          title="Monthly Revenue"
-          value={`LKR ${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
+          title="Total Revenue"
+          value={`LKR ${(stats.totalRevenue / 1000).toFixed(1)}K`}
           icon={<DollarSign size={24} />}
           trend={{
-            value: stats.monthlyRevenueTrend,
-            isPositive: stats.monthlyRevenueTrend >= 0,
+            value: stats.revenueTrend,
+            isPositive: stats.revenueTrend >= 0,
           }}
           color="yellow"
         />
