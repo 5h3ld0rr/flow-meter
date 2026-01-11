@@ -75,32 +75,6 @@ export default function Page() {
           required
         />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Utility Services
-          </label>
-          <div className="flex gap-4">
-            <label className="flex items-center space-x-2">
-              <input type="checkbox" className="rounded" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Electricity
-              </span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input type="checkbox" className="rounded" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Water
-              </span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input type="checkbox" className="rounded" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Gas
-              </span>
-            </label>
-          </div>
-        </div>
-
         <div className="flex gap-3 pt-4">
           <Button
             variant="primary"

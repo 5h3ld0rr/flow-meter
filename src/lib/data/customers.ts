@@ -28,7 +28,9 @@ export async function getCustomers(search?: string): Promise<Customer[]> {
 
   return result.recordset.map((customer) => ({
     ...customer,
-    utilities: customer.utilities ? customer.utilities.split(",") : [],
+    utilities: customer.utilities
+      ? Array.from(new Set(customer.utilities.split(",")))
+      : [],
   }));
 }
 
