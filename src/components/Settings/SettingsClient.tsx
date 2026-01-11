@@ -1,18 +1,16 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button, GlassCard, Input } from "@/components/ui";
 import { DollarSign, Save } from "lucide-react";
 import { updateTariffRates } from "@/lib/actions/billing";
+import { cn } from "@/lib/utils";
 
 import { toast } from "sonner";
-
-interface Tariff {
-  utility_type: string;
-  rate_per_unit: number;
-}
+import { UTILITIES } from "@/constants";
 
 export const SettingsClient = ({ tariffs }: { tariffs: Tariff[] }) => {
+  const [activeTab, setActiveTab] = useState<string>("electricity");
   const [tariffState, tariffAction, isSavingTariffs] = useActionState(
     updateTariffRates,
     undefined
@@ -23,14 +21,6 @@ export const SettingsClient = ({ tariffs }: { tariffs: Tariff[] }) => {
       toast[tariffState.success ? "success" : "error"](tariffState.message);
     }
   }, [tariffState]);
-
-  const electricityRate =
-    tariffs.find((t) => t.utility_type === "electricity")?.rate_per_unit ||
-    0.15;
-  const waterRate =
-    tariffs.find((t) => t.utility_type === "water")?.rate_per_unit || 0.05;
-  const gasRate =
-    tariffs.find((t) => t.utility_type === "gas")?.rate_per_unit || 0.25;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -51,49 +41,85 @@ export const SettingsClient = ({ tariffs }: { tariffs: Tariff[] }) => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none" />
 
             <form action={tariffAction} className="space-y-6 relative z-10">
-              <div className="space-y-4">
-                <Input
-                  label="Electricity Rate (per kWh)"
-                  name="electricity"
-                  type="number"
-                  step="0.0001"
-                  defaultValue={electricityRate}
-                  icon={
-                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                      ⚡
+              <div className="flex flex-wrap px-1 bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-xl mb-8">
+                {Object.entries(UTILITIES).map(([key, util]) => (
+                  <Button
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    variant={activeTab === key ? "primary" : "ghost"}
+                    icon={<util.icon size={18} />}
+                    className="flex-1 text-nowrap"
+                  >
+                    {util.name}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="space-y-6">
+                {(["electricity", "water", "gas"] as const).map((utility) => (
+                  <div
+                    key={utility}
+                    className={cn(
+                      "space-y-4 animate-in fade-in zoom-in-95 duration-300",
+                      activeTab === utility ? "block" : "hidden"
+                    )}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(["household", "business", "government"] as const).map(
+                        (type) => {
+                          const rate =
+                            tariffs
+                              .filter(
+                                (t) =>
+                                  t.utility_type === utility &&
+                                  t.customer_type === type
+                              )
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.effective_from).getTime() -
+                                  new Date(a.effective_from).getTime()
+                              )[0]?.rate_per_unit ||
+                            (type === "household"
+                              ? utility === "electricity"
+                                ? 0.15
+                                : utility === "water"
+                                ? 0.05
+                                : 0.25
+                              : 0);
+
+                          return (
+                            <div
+                              key={`${utility}_${type}`}
+                              className="group relative"
+                            >
+                              <Input
+                                label={
+                                  type.charAt(0).toUpperCase() + type.slice(1)
+                                }
+                                name={`${utility}_${type}`}
+                                type="number"
+                                step="0.0001"
+                                defaultValue={rate}
+                                className="bg-white/50 dark:bg-slate-900/50 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors"
+                                required
+                                icon={
+                                  <div className="text-xs font-medium text-gray-500">
+                                    {utility === "electricity"
+                                      ? "kWh "
+                                      : utility === "water"
+                                      ? "L "
+                                      : "m³ "}
+                                  </div>
+                                }
+                              />
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
-                  }
-                  className="bg-white/50 dark:bg-slate-900/50"
-                  required
-                />
-                <Input
-                  label="Water Rate (per Liter)"
-                  name="water"
-                  type="number"
-                  step="0.0001"
-                  defaultValue={waterRate}
-                  icon={
-                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                      💧
-                    </div>
-                  }
-                  className="bg-white/50 dark:bg-slate-900/50"
-                  required
-                />
-                <Input
-                  label="Gas Rate (per m³)"
-                  name="gas"
-                  type="number"
-                  step="0.0001"
-                  defaultValue={gasRate}
-                  icon={
-                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                      🔥
-                    </div>
-                  }
-                  className="bg-white/50 dark:bg-slate-900/50"
-                  required
-                />
+                  </div>
+                ))}
               </div>
 
               <div className="pt-2">

@@ -5,15 +5,24 @@ import { getMeters } from "@/lib/data/meters";
 import { addTariffRate } from "@/lib/data/billing";
 import { revalidatePath } from "next/cache";
 
-export async function updateTariffRates(prevState: any, formData: FormData) {
+export async function updateTariffRates(
+  prevState: { success: boolean; message: string } | undefined | null,
+  formData: FormData
+) {
   try {
-    const electricity = parseFloat(formData.get("electricity") as string);
-    const water = parseFloat(formData.get("water") as string);
-    const gas = parseFloat(formData.get("gas") as string);
+    const utilityTypes = ["electricity", "water", "gas"];
+    const customerTypes = ["household", "business", "government"];
 
-    if (!isNaN(electricity)) await addTariffRate("electricity", electricity);
-    if (!isNaN(water)) await addTariffRate("water", water);
-    if (!isNaN(gas)) await addTariffRate("gas", gas);
+    for (const utility of utilityTypes) {
+      for (const customerType of customerTypes) {
+        const key = `${utility}_${customerType}`;
+        const rate = parseFloat(formData.get(key) as string);
+
+        if (!isNaN(rate)) {
+          await addTariffRate(utility, rate, customerType);
+        }
+      }
+    }
 
     revalidatePath("/UMS/Settings");
     return { success: true, message: "Tariff rates updated successfully" };

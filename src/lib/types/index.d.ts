@@ -56,6 +56,7 @@ declare global {
   interface Tariff {
     id: number;
     utility_type: utilityType;
+    customer_type: "household" | "business" | "government";
     rate_per_unit: number;
     tax_percentage: number;
     effective_from: Date;

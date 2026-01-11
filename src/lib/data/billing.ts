@@ -61,10 +61,17 @@ export async function getMeterUtilityType(meterId: number) {
   return result.recordset[0]?.utility_type || null;
 }
 
-export async function getTariffRate(utilityType: string): Promise<number> {
+export async function getTariffRate(
+  utilityType: string,
+  customerType: string = "household"
+): Promise<number> {
   const result = await query<{ rate_per_unit: number }>(
-    "SELECT TOP 1 rate_per_unit FROM Tariffs WHERE utility_type = @utilityType ORDER BY effective_from DESC",
-    { utilityType }
+    `SELECT TOP 1 rate_per_unit 
+     FROM Tariffs 
+     WHERE utility_type = @utilityType 
+       AND customer_type = @customerType
+     ORDER BY effective_from DESC`,
+    { utilityType, customerType }
   );
   return result.recordset[0]?.rate_per_unit || 0.15;
 }
@@ -81,14 +88,18 @@ export async function getAllTariffs() {
   return result.recordset;
 }
 
-export async function addTariffRate(utilityType: string, rate: number) {
+export async function addTariffRate(
+  utilityType: string,
+  rate: number,
+  customerType: string = "household"
+) {
   // Check if current rate is different to avoid spamming
-  const currentRate = await getTariffRate(utilityType);
+  const currentRate = await getTariffRate(utilityType, customerType);
   if (currentRate === rate) return; // No change needed
 
   await query(
-    `INSERT INTO Tariffs (utility_type, rate_per_unit, effective_from)
-     VALUES (@utilityType, @rate, GETDATE())`,
-    { utilityType, rate }
+    `INSERT INTO Tariffs (utility_type, customer_type, rate_per_unit, effective_from)
+     VALUES (@utilityType, @customerType, @rate, GETDATE())`,
+    { utilityType, customerType, rate }
   );
 }
