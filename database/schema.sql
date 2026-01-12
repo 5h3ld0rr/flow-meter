@@ -63,6 +63,7 @@ GO
 CREATE TABLE dbo.Tariffs (
     id INT IDENTITY(1,1) PRIMARY KEY,
     utility_type NVARCHAR(50) NOT NULL CONSTRAINT CHK_Tariffs_UtilityType CHECK (utility_type IN ('electricity', 'water', 'gas')),
+    customer_type NVARCHAR(50) NOT NULL DEFAULT 'household' CONSTRAINT CHK_Tariffs_CustomerType CHECK (customer_type IN ('household', 'business', 'government')),
     rate_per_unit DECIMAL(18,4) NOT NULL CHECK (rate_per_unit >= 0),
     tax_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00 CHECK (tax_percentage >= 0 AND tax_percentage <= 100),
     effective_from DATE NOT NULL,
