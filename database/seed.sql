@@ -12,11 +12,11 @@ VALUES
 GO
 
 -- Tariffs
-INSERT INTO dbo.Tariffs (utility_type, rate_per_unit, tax_percentage, effective_from)
+INSERT INTO dbo.Tariffs (utility_type, customer_type, rate_per_unit, tax_percentage, effective_from)
 VALUES
-    ('electricity', 0.15, 10.00, '2025-01-01'),
-    ('water', 0.05, 10.00, '2025-01-01'),
-    ('gas', 0.12, 10.00, '2025-01-01');
+    ('electricity', 'household', 0.15, 10.00, '2025-01-01'),
+    ('water', 'household', 0.05, 10.00, '2025-01-01'),
+    ('gas', 'household', 0.12, 10.00, '2025-01-01');
 GO
 
 -- Customers
